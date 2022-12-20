@@ -3,8 +3,8 @@ import { User } from "../user/base/user";
 
 @ObjectType()
 export class UserInfo implements Partial<User> {
-  @Field(() => Number)
-  id!: number;
+  @Field(() => String)
+  id!: string;
   @Field(() => String)
   username!: string;
   @Field(() => [String])

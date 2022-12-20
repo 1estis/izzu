@@ -10,7 +10,7 @@ generator client {
 model User {
   createdAt DateTime @default(now())
   firstName String?
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   lastName  String?
   password  String
   roles     Json
@@ -21,11 +21,11 @@ model User {
 model Order {
   createdAt  DateTime  @default(now())
   customer   Customer? @relation(fields: [customerId], references: [id])
-  customerId Int?
+  customerId String?
   discount   Float?
-  id         Int       @id @default(autoincrement())
+  id         String    @id @default(cuid())
   product    Product?  @relation(fields: [productId], references: [id])
-  productId  Int?
+  productId  String?
   quantity   Int?
   totalPrice Int?
   updatedAt  DateTime  @updatedAt
@@ -33,11 +33,11 @@ model Order {
 
 model Customer {
   address   Address? @relation(fields: [addressId], references: [id])
-  addressId Int?
+  addressId String?
   createdAt DateTime @default(now())
   email     String?
   firstName String?
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   lastName  String?
   orders    Order[]
   phone     String?
@@ -50,7 +50,7 @@ model Address {
   city      String?
   createdAt DateTime   @default(now())
   customers Customer[]
-  id        Int        @id @default(autoincrement())
+  id        String     @id @default(cuid())
   state     String?
   updatedAt DateTime   @updatedAt
   zip       Int?
@@ -59,7 +59,7 @@ model Address {
 model Product {
   createdAt   DateTime @default(now())
   description String?
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(cuid())
   itemPrice   Float?
   name        String?
   orders      Order[]

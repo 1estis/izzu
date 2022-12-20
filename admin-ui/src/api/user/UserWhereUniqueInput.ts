@@ -1,3 +1,3 @@
 export type UserWhereUniqueInput = {
-  id: number;
+  id: string;
 };

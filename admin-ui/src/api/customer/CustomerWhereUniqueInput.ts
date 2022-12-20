@@ -1,3 +1,3 @@
 export type CustomerWhereUniqueInput = {
-  id: number;
+  id: string;
 };
