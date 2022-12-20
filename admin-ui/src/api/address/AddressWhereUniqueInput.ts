@@ -1,3 +1,3 @@
 export type AddressWhereUniqueInput = {
-  id: number;
+  id: string;
 };

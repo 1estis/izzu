@@ -6,7 +6,7 @@ export type Address = {
   city: string | null;
   createdAt: Date;
   customers?: Array<Customer>;
-  id: number;
+  id: string;
   state: string | null;
   updatedAt: Date;
   zip: number | null;
