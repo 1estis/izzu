@@ -26,6 +26,8 @@ SECURITY_REGISTERABLE = True
 SECURITY_POST_LOGIN_VIEW = 'members.member_page'
 SECURITY_RECOVERABLE = True
 SECURITY_CHANGEABLE = True
+# I want to use login as username, not email
+# SECURITY_USER_IDENTITY_ATTRIBUTES = 'username'
 
 
 # i18n

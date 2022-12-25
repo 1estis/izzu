@@ -1,21 +1,10 @@
 from app import db
-
-class Language(db.Document):
-    active = db.BooleanField(default=True)
-    name = db.StringField(max_length=255, unique=True, required=True)
-    code = db.StringField(max_length=255, unique=True, required=True)
+from .classificator import Classificator
 
 
-class ContentType(db.Document):
-    active = db.BooleanField(default=True)
-    name = db.StringField(max_length=255, unique=True, required=True)
-    label = db.StringField(max_length=255)
-
-
-class Genre(db.Document):
-    active = db.BooleanField(default=True)
-    name = db.StringField(max_length=255, unique=True, required=True)
-    description = db.StringField()
+class Language(Classificator): pass
+class ContentType(Classificator): pass
+class Genre(Classificator): pass
 
 
 class Episode(db.Document):

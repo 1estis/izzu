@@ -26,14 +26,15 @@ def set_lang(lang):
 
 @members_blueprint.before_app_first_request
 def init_my_blueprint():
-    if not app.user_datastore.get_user('admin'):
+    if not app.user_datastore.get_user('admin@self.com'):
         app.user_datastore.create_role(name="admin")
         app.user_datastore.create_user(
-            login='admin', email='admin@localhost.com',
+            username='admin', email='admin@self.com',
             confirmed_at=datetime.now(),
             password='vxtr5w7c_nxd', roles=['admin']
         )
-        ContentType(name='movies', label='Movies').save()
+        Language(name='english', code='en').save()
+        ContentType(name='movies', code='movies').save()
     pass
 
 
