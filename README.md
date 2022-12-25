@@ -4,8 +4,10 @@
 
 We assume that you have `git`, `virtualenv`, `pep-tools` and `mongoDB` installed.
 
-```pip-compile```
-```pip install -r requirements.txt```
+```bash
+pip-compile
+pip install -r requirements.txt
+```
 
 ## Running the app
 
