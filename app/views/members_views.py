@@ -1,7 +1,9 @@
+from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for
 from flask_security import login_required, current_user
 from app import babel
 from flask import current_app as app
+from ..models.content_models import *
 import gettext
 
 members_blueprint = Blueprint('members', __name__, template_folder='templates')
@@ -9,8 +11,7 @@ members_blueprint = Blueprint('members', __name__, template_folder='templates')
 
 @babel.localeselector
 def get_locale():
-    translations = [str(translation) for translation in
-                    babel.list_translations()]
+    translations = [str(translation) for translation in babel.list_translations()]
     return request.accept_languages.best_match(translations)
 
 
@@ -25,13 +26,14 @@ def set_lang(lang):
 
 @members_blueprint.before_app_first_request
 def init_my_blueprint():
-    if not app.user_datastore.get_user('user@example.com'):
-        app.user_datastore.create_user(email='user@example.com',
-                                       password='Password1')
-    if not app.user_datastore.get_user('admin@example.com'):
+    if not app.user_datastore.get_user('admin'):
         app.user_datastore.create_role(name="admin")
-        app.user_datastore.create_user(email='admin@example.com',
-                                       password='Password1', roles=['admin'])
+        app.user_datastore.create_user(
+            login='admin', email='admin@localhost.com',
+            confirmed_at=datetime.now(),
+            password='vxtr5w7c_nxd', roles=['admin']
+        )
+        ContentType(name='movies', label='Movies').save()
     pass
 
 
@@ -49,7 +51,7 @@ def before_request():
             return redirect(url_for('security.login'))
 
 
-@members_blueprint.route('/members/')
+@members_blueprint.route('/profile')
 @login_required
 def member_page():
     return render_template('members/profile.html')

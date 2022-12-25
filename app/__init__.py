@@ -59,7 +59,6 @@ def create_app(extra_config_settings={}):
     from .models.user_models import User, Role
     app.user_datastore = MongoEngineUserDatastore(db, User, Role)
     security.init_app(app, app.user_datastore)
-    # datastore.create_user(email='matt@nobien.net', password='password')
 
     Bootstrap(app)  # Initialize flask_bootstrap
 
