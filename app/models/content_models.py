@@ -1,4 +1,6 @@
+from datetime import datetime as dt
 from app import db
+from typing import List
 from .classificator import Classificator
 
 
@@ -8,34 +10,32 @@ class Genre(Classificator): pass
 
 
 class Episode(db.Document):
-    number = db.IntField(required=True)
-    title = db.StringField(required=True)
-    description = db.StringField()
-    release_date = db.DateTimeField(required=True)
-    original_language = db.ReferenceField(Language, required=True)
-    translations = db.ListField(db.ReferenceField(Language), default=[], required=True, ordering='number')
-
+    number: int = db.IntField(required=True)
+    title: str = db.StringField(required=True)
+    description: str = db.StringField()
+    release_date: dt = db.DateTimeField(required=True)
+    original_language: Language = db.ReferenceField(Language, required=True)
+    translations: List[Language] = db.ListField(db.ReferenceField(Language), default=[], required=True, ordering='number')
 
 class Season(db.Document):
-    number = db.IntField(required=True)
-    title = db.StringField(required=True)
-    description = db.StringField()
-    release_date = db.DateTimeField(required=True)
-    original_language = db.ReferenceField(Language, required=True)
-    translations = db.ListField(db.ReferenceField(Language), default=[])
-    episodes = db.ListField(db.ReferenceField(Episode), default=[], required=True, ordering='number')
-
+    number: int = db.IntField(required=True)
+    title: str = db.StringField(required=True)
+    description: str = db.StringField()
+    release_date: dt = db.DateTimeField(required=True)
+    original_language: Language = db.ReferenceField(Language, required=True)
+    translations: List[Language] = db.ListField(db.ReferenceField(Language), default=[])
+    episodes: List[Episode] = db.ListField(db.ReferenceField(Episode), default=[], required=True, ordering='number')
 
 class Content(db.Document):
-    # auto increment id
-    id = db.SequenceField(primary_key=True)
+    # autoincrement id
+    id: int = db.SequenceField(primary_key=True)
     meta = {'allow_inheritance': True, 'indexes': ['id'], 'ordering': ['-id'], }
-    type = db.ReferenceField(ContentType, required=True)
-    title = db.StringField(required=True)
-    description = db.StringField(required=True)
-    release_date = db.DateTimeField(required=True)
-    original_language = db.ReferenceField(Language, required=True)
-    translations = db.ListField(db.ReferenceField(Language), default=[])
+    type: ContentType = db.ReferenceField(ContentType, required=True)
+    title: str = db.StringField(required=True)
+    description: str = db.StringField(required=True)
+    release_date: dt = db.DateTimeField(required=True)
+    original_language: Language = db.ReferenceField(Language, required=True)
+    translations: List[Language] = db.ListField(db.ReferenceField(Language), default=[])
     # duration = db.IntField()
     # rating = db.IntField()
     # genres = db.ListField(db.ReferenceField(Genre))
