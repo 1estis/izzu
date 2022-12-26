@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for
 from flask_security import login_required, current_user
 from app import babel
 from flask import current_app as app
-from ..models.content_models import *
+from ..models.content import *
 import gettext
 
 members_blueprint = Blueprint('members', __name__, template_folder='templates')
@@ -27,14 +27,22 @@ def set_lang(lang):
 @members_blueprint.before_app_first_request
 def init_my_blueprint():
     if not app.user_datastore.get_user('admin@self.com'):
+        en: Language = Language(name='english', code='en').save()
+        ru: Language = Language(name='russian', code='ru').save()
+        en.set_label(en, 'English')
+        en.set_label(ru, 'Английский')
+        ru.set_label(en, 'Russian')
+        ru.set_label(ru, 'Русский')
+        ContentType(name='movies', code='movies')\
+            .set_label(en, 'Movies')\
+            .set_label(ru, 'Фильмы')
+        print(en.label(ru))
         app.user_datastore.create_role(name="admin")
         app.user_datastore.create_user(
             username='admin', email='admin@self.com',
             confirmed_at=datetime.now(),
             password='vxtr5w7c_nxd', roles=['admin']
         )
-        Language(name='english', code='en').save()
-        ContentType(name='movies', code='movies').save()
     pass
 
 

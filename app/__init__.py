@@ -56,8 +56,8 @@ def create_app(extra_config_settings={}):
     init_email_error_handler(app)
 
     # Setup Flask-secure
-    from .models.user_models import User, Role
-    app.user_datastore = MongoEngineUserDatastore(db, User, Role)
+    from .models.security import User, Role
+    app.user_datastore: MongoEngineUserDatastore = MongoEngineUserDatastore(db, User, Role)
     security.init_app(app, app.user_datastore)
 
     Bootstrap(app)  # Initialize flask_bootstrap
