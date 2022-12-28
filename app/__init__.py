@@ -51,6 +51,8 @@ def create_app(extra_config_settings={}):
     app.register_blueprint(public_blueprint)
     from app.views.members_views import members_blueprint
     app.register_blueprint(members_blueprint)
+    from app.views.admin_views import admin_blueprint
+    app.register_blueprint(admin_blueprint)
 
     # Setup an error-logger to send emails to app.config.ADMINS
     init_email_error_handler(app)
@@ -73,18 +75,18 @@ def create_app(extra_config_settings={}):
     app.jinja_env.globals['bootstrap_is_hidden_field'] = is_hidden_field_filter
 
     # Setup Flask-admin
-    class AdminUserView(ModelView):
-        can_create = False
-        column_exclude_list = ('password')
-        form_overrides = dict(password=HiddenField)
+    # class AdminUserView(ModelView):
+    #     can_create = False
+    #     column_exclude_list = ('password')
+    #     form_overrides = dict(password=HiddenField)
 
-    admin = Admin(app, template_mode='bootstrap3')
-    admin.add_view(AdminUserView(User))
-    admin.add_view(ModelView(Role))
-    path = op.join(op.dirname(__file__), 'static')
-    admin.add_view(FileAdmin(path, '/static/', name='Files'))
-    admin.add_link(MenuLink(name='Profile', endpoint='members.member_page'))
-    admin.add_link(MenuLink(name='Logout', endpoint='security.logout'))
+    # admin = Admin(app, template_mode='bootstrap3')
+    # admin.add_view(AdminUserView(User))
+    # admin.add_view(ModelView(Role))
+    # path = op.join(op.dirname(__file__), 'static')
+    # admin.add_view(FileAdmin(path, '/static', name='Files'))
+    # admin.add_link(MenuLink(name='Profile', endpoint='members.profile'))
+    # admin.add_link(MenuLink(name='Logout', endpoint='security.logout'))
 
     return app
 

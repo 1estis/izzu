@@ -11,6 +11,12 @@ body {
     margin-bottom: 60px;
 }
 
+.table {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    scroll-snap-type: y mandatory;
+  }
+
 .footer {
     position: absolute;
     bottom: 0;

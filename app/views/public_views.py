@@ -6,15 +6,15 @@ public_blueprint = Blueprint('public', __name__, template_folder='templates')
 
 
 @public_blueprint.route('/')
-def home_page():
-    return render_template('public/home_page.html')
+def home():
+    return render_template('public/home.html')
 
 @public_blueprint.route('/<content_type>')
 def content_list(content_type):
     if type(content_type) == str and content_type in [ct.name for ct in ContentType.objects(active=True)]:
         return render_template('public/content_list.html', content_type=ContentType.objects(name=content_type).first())
     else:
-        return redirect(url_for('public.home_page'))
+        return redirect(url_for('public.home'))
 
 @public_blueprint.route('/<content_type>/<content_id_and_name>')
 def content_page(content_type, content_id_and_name):
@@ -27,4 +27,4 @@ def content_page(content_type, content_id_and_name):
         else:
             return redirect(url_for('public.content_list', content_type=content_type))
     else:
-        return redirect(url_for('public.home_page'))
+        return redirect(url_for('public.home'))

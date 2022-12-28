@@ -4,7 +4,7 @@ from app import db
 
 
 class Role(db.Document, RoleMixin):
-    name: str = db.StringField(max_length=80, unique=True, required=True)
+    name: str = db.StringField(max_length=80, primary_key=True)
     description: str = db.StringField(max_length=255)
 
     def __unicode__(self) -> str:

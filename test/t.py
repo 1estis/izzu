@@ -25,8 +25,8 @@ class AppTestCase(unittest.TestCase):
     #  Тесты публичной части сайта
     # ---------------------------------------------------------------------
 
-    def test_home_page(self):  # Тест главной страницы
-        response = self.client.get(url_for('public.home_page'),
+    def test_home(self):  # Тест главной страницы
+        response = self.client.get(url_for('public.home'),
                                    content_type='html/text')
         self.assertEqual(response.status_code, 200)
         assert 'Войти' in response.data.decode('utf-8')

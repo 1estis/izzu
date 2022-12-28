@@ -1,9 +1,9 @@
 from __future__ import annotations
-from . import _types as _types
+from . import _types, content
 from app import db
 
 
-class LabelMixin:
+class LabelManager:
     name: str = db.StringField(max_length=255, required=True)
     _labels: list[_types.Label] = db.ListField(db.EmbeddedDocumentField(_types.Label, unique=True), default=[])
     
@@ -32,7 +32,7 @@ class LabelMixin:
         return self
 
 
-class TitleMixin:
+class TitleManager:
     original_title: str = db.StringField(max_length=255, required=True)
     _titles: list[_types.Title] = db.ListField(db.EmbeddedDocumentField(_types.Title), default=[])
     
@@ -61,7 +61,7 @@ class TitleMixin:
         return self
 
 
-class PosterMixin:
+class PosterManager:
     _posters: list[_types.Poster] = db.ListField(db.EmbeddedDocumentField(_types.Poster), default=[])
     
     def poster(self, language: Language | None = None) -> str:
@@ -100,7 +100,7 @@ class PosterMixin:
         return self
 
 
-class DescriptionMixin:
+class DescriptionManager:
     _descriptions: list[_types.Description] = db.ListField(db.EmbeddedDocumentField(_types.Description), default=[])
     
     def description(self, language: Language | None = None) -> str:
@@ -128,7 +128,10 @@ class DescriptionMixin:
         return self
 
 
-class Dictionary(db.Document, LabelMixin, DescriptionMixin):
+class MediafileManager: pass
+
+
+class Dictionary(db.Document, LabelManager, DescriptionManager):
     meta = {'abstract': True, 'allow_inheritance': True, 'ordering': ['name'], 'indexes': ['name', 'code']}
     active: bool = db.BooleanField(default=True, required=True)
     name: str = db.StringField(max_length=255, required=True)

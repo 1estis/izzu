@@ -1,6 +1,6 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for
-from flask_security import login_required, current_user
+from flask_security import login_required, current_user, roles_required
 from app import babel
 from flask import current_app as app
 from ..models.content import *
@@ -62,5 +62,5 @@ def before_request():
 
 @members_blueprint.route('/profile')
 @login_required
-def member_page():
+def profile():
     return render_template('members/profile.html')

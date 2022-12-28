@@ -23,7 +23,7 @@ MONGODB_PORT = 27017
 # Flask Security
 SECURITY_PASSWORD_SALT = 'DO_NOT_use_Unsecure_Secrets_in_production'
 SECURITY_REGISTERABLE = True
-SECURITY_POST_LOGIN_VIEW = 'members.member_page'
+SECURITY_POST_LOGIN_VIEW = 'public.home'
 SECURITY_RECOVERABLE = True
 SECURITY_CHANGEABLE = True
 # I want to use login as username, not email
