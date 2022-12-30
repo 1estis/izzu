@@ -2,7 +2,7 @@
 
 ## Setting up a development environment
 
-We assume that you have `git`, `virtualenv`, `pep-tools` and `mongoDB` installed.
+We assume that you have `git`, `npm`, `virtualenv`, `pep-tools` and `mongoDB` installed.
 
 ```bash
 pip-compile
