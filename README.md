@@ -7,6 +7,7 @@ We assume that you have `git`, `virtualenv`, `pep-tools` and `mongoDB` installed
 ```bash
 pip-compile
 pip install -r requirements.txt
+npm install
 ```
 
 ## Running the app
