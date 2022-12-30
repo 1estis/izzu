@@ -11,7 +11,8 @@ DEBUG = True
 # DO NOT use Unsecure Secrets in production environments
 # Generate a safe one with:
 #    python -c "import os; print(repr(os.urandom(24)));"
-SECRET_KEY = 'DO_NOT_use_Unsecure_Secrets_in_production' # 'ãßï3Ç´o¥R_ô£skÿîH∟' # '\x8c\xe3\xdf\xef3\x07\xc7\xb4o\xa5H\x08R_\xf4\xa3s\x99k\xff\xeeH\x1c\t'
+SECRET_KEY = 'DO_NOT_use_Unsecure_Secrets_in_production' # 'ãßï3Ç´o¥R_ô£skÿîH∟'
+# '\x8c\xe3\xdf\xef3\x07\xc7\xb4o\xa5H\x08R_\xf4\xa3s\x99k\xff\xeeH\x1c\t'
 COOKIE_SECURE = 'Secure'
 COOKIE_DURATION = timedelta(days=365)
 

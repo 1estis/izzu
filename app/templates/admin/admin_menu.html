@@ -4,21 +4,24 @@
   {% block admin_menu %}
     <nav>
       <ul class="nav nav-pills nav-left">
-        <li role="presentation" {% if active_page == 'admin' %}class="active"{% endif %}>
+        {# <li role="presentation" {% if active_page == 'admin' %}class="active"{% endif %}>
           <a id="admin-tab" href="{{ url_for('admin.admin') }}">{{ _('Admin') }}</a>
-        </li>
+        </li> #}
         <li role="presentation" {% if active_page == 'dictionaries' %}class="active"{% endif %}>
           <a id="dictionaries-tab" href="{{ url_for('admin.dictionaries') }}">{{ _('Dictionaries') }}</a>
         </li>
         {# <li role="presentation" class="{% if active_page == 'users' %}active{% endif %}">
           <a id="users-tab" href="{{ url_for('admin.users') }}">{{ _('Users') }}</a>
-        </li>
-        <li role="presentation" class="{% if active_page == 'settings' %}active{% endif %}">
+        </li> #}
+        {# <li role="presentation" class="{% if active_page == 'settings' %}active{% endif %}">
           <a id="settings-tab" href="{{ url_for('admin.settings') }}">{{ _('Settings') }}</a>
         </li> #}
       </ul>
     </nav>
   {% endblock %}
+  {# a little gap between the menu and the content
+  {#  #}
+  <h6></h6>
   {% block admin_content %}{% endblock %}
 {% endblock %}
 
