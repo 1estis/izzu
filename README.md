@@ -2,7 +2,7 @@
 
 ## Setting up a development environment
 
-We assume that you have `git`, `npm`, `virtualenv`, `pep-tools` and `mongoDB` installed.
+We assume that you have `git`, `Node.js`, `npm`, `virtualenv`, `pep-tools` and `mongoDB` installed.
 
 ```bash
 pip-compile
@@ -18,4 +18,4 @@ npm install
 
 ## Start the Flask development web server
 
-```flask run --host=0.0.0.0```
+```flask run --host=0.0.0.0 --debugger --reload```

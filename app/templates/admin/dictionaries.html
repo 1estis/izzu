@@ -4,90 +4,99 @@
 {# Dictionary model:
 
 class Label(db.EmbeddedDocument):
-    language: tools.Language = db.ReferenceField('tools.Language', primary_key=True)
-    label: str = db.StringField(max_length=255, required=True)
+  language: tools.Language = db.ReferenceField('tools.Language', primary_key=True)
+  label: str = db.StringField(max_length=255, required=True)
 
 class Description(db.EmbeddedDocument):
-    language: tools.Language = db.ReferenceField('tools.Language', primary_key=True)
-    description: str = db.StringField(required=True)
+  language: tools.Language = db.ReferenceField('tools.Language', primary_key=True)
+  description: str = db.StringField(required=True)
 
 class LabelManager:
-    name: str = db.StringField(max_length=255, required=True)
-    _labels: list[_types.Label] = db.ListField(db.EmbeddedDocumentField(_types.Label, unique=True), default=[])
-    
-    def label(self, language: Language | None = None) -> str:
-        ln_code = language.code if language else 'en'
-        for l in self._labels:
-            if l.language.code == ln_code:
-                return l.label
-        return self.name.capitalize()
-    
-    def set_label(self, language: Language, label: str, save: bool = True):
-        for l in self._labels:
-            if l.language == language:
-                l.label = label
-                if save: self.save()
-                return self
-        self._labels.append(_types.Label(language=language, label=label))
+  name: str = db.StringField(max_length=255, required=True)
+  _labels: list[_types.Label] = db.ListField(db.EmbeddedDocumentField(_types.Label, unique=True), default=[])
+  
+  def label(self, language: Language | None = None) -> str:
+    ln_code = language.code if language else 'en'
+    for l in self._labels:
+      if l.language.code == ln_code:
+        return l.label
+    return self.name.capitalize()
+  
+  def set_label(self, language: Language, label: str, save: bool = True):
+    for l in self._labels:
+      if l.language == language:
+        l.label = label
         if save: self.save()
         return self
-    
-    def remove_label(self, language: Language, save: bool = True):
-        for l in self._labels:
-            if l.language == language:
-                self._labels.remove(l)
-                if save: self.save()
-        return self
+    self._labels.append(_types.Label(language=language, label=label))
+    if save: self.save()
+    return self
+  
+  def remove_label(self, language: Language, save: bool = True):
+    for l in self._labels:
+      if l.language == language:
+        self._labels.remove(l)
+        if save: self.save()
+    return self
 
 class DescriptionManager:
-    _descriptions: list[_types.Description] = db.ListField(db.EmbeddedDocumentField(_types.Description), default=[])
-    
-    def description(self, language: Language | None = None) -> str:
-        ln_code = language.code if language else 'en'
-        for d in self._descriptions:
-            if d.language.code == ln_code:
-                return d.description
-        return ''
-    
-    def set_description(self, language: Language, description: str, save: bool = True):
-        for d in self._descriptions:
-            if d.language == language:
-                d.description = description
-                if save: self.save()
-                return self
-        self._descriptions.append(_types.Description(language=language, description=description))
+  _descriptions: list[_types.Description] = db.ListField(db.EmbeddedDocumentField(_types.Description), default=[])
+  
+  def description(self, language: Language | None = None) -> str:
+    ln_code = language.code if language else 'en'
+    for d in self._descriptions:
+      if d.language.code == ln_code:
+        return d.description
+    return ''
+  
+  def set_description(self, language: Language, description: str, save: bool = True):
+    for d in self._descriptions:
+      if d.language == language:
+        d.description = description
         if save: self.save()
         return self
-    
-    def remove_description(self, language: Language, save: bool = True):
-        for d in self._descriptions:
-            if d.language == language:
-                self._descriptions.remove(d)
-                if save: self.save()
-        return self
+    self._descriptions.append(_types.Description(language=language, description=description))
+    if save: self.save()
+    return self
+  
+  def remove_description(self, language: Language, save: bool = True):
+    for d in self._descriptions:
+      if d.language == language:
+        self._descriptions.remove(d)
+        if save: self.save()
+    return self
 
 class Dictionary(db.Document, LabelManager, DescriptionManager):
-    meta = {'abstract': True, 'allow_inheritance': True, 'ordering': ['name'], 'indexes': ['name', 'code']}
-    active: bool = db.BooleanField(default=True, required=True)
-    name: str = db.StringField(max_length=255, required=True)
-    code: str = db.StringField(max_length=255, primary_key=True, required=True)
+  meta = {'abstract': True, 'allow_inheritance': True, 'ordering': ['name'], 'indexes': ['name', 'code']}
+  active: bool = db.BooleanField(default=True, required=True)
+  name: str = db.StringField(max_length=255, required=True)
+  code: str = db.StringField(max_length=255, primary_key=True, required=True)
+    code_pattern: str = '[a-z0-9_]{1,255}'
     
     def __unicode__(self) -> str:
         return str(self.name).capitalize()
 
-class Language(Dictionary): code: str = db.StringField(max_length=2, primary_key=True)
+
+class Language(Dictionary):
+  code: str = db.StringField(max_length=2, primary_key=True)
+  code_pattern: str = '[a-z]{2}'
 
 dictionaries = [{
 	'name': ..., # Dictionary name
 	'objects': [...], # List of dictionary objects
+  'object': ..., # Dictionary object
+  'fields': [...] # List of dictionary fields
 }, ...]
+
+languages = [...] # List of languages
 
 #}
 <script type="module">
-	import '{{ url_for('public.module', path='@polymer/iron-form/iron-form.js') }}';
-	import '{{ url_for('public.module', path='@polymer/paper-checkbox/paper-checkbox.js') }}';
-	import '{{ url_for('public.module', path='@polymer/paper-input/paper-input.js') }}';
-	import '{{ url_for('public.module', path='@polymer/paper-button/paper-button.js') }}';
+	import '{{ url_for('static', filename='dist/webcomponents/@polymer/iron-form/iron-form.js') }}';
+	import '{{ url_for('static', filename='dist/webcomponents/@polymer/paper-checkbox/paper-checkbox.js') }}';
+	import '{{ url_for('static', filename='dist/webcomponents/@polymer/paper-input/paper-input.js') }}';
+	import '{{ url_for('static', filename='dist/webcomponents/@polymer/paper-button/paper-button.js') }}';
+  import '{{ url_for('static', filename='dist/webcomponents/@spectrum-web-components/checkbox/sp-checkbox.js') }}';
 </script>
 <div class="row clearfix no-margin no-padding">
 	<div class="col-md-12">
@@ -114,35 +123,43 @@ dictionaries = [{
 							</tr>
 						</thead>
 						<tbody>
-							{# Add new object (long button, if clicked, it will replace the button with a form) #}
-							<tr>
-								<td colspan="6">
-									{# <button class="btn btn-primary btn-block" type="button"
-									onclick="this.style.display = 'none'; this.nextElementSibling.style.display = 'block';"
-									>Add new {{ d.name }}</button> #}
-									<paper-button class="btn btn-primary btn-block" type="button"
-									onclick="this.style.display = 'none'; this.nextElementSibling.style.display = 'block';"
-									>Add new {{ d.name }}</paper-button>
-									<iron-form id="new-{{ d.name }}" style="display: none;">
-										<form method="post" action="{{ pass }}">
-											<paper-input name="code" label="Code" required></paper-input>
-											<paper-input name="name" label="Name" required></paper-input>
-											<paper-input name="label" label="Label" required></paper-input>
-											<paper-input name="description" label="Description" required></paper-input>
-											<paper-checkbox name="active" checked>Active</paper-checkbox>
-											{# <button class="btn btn-primary" type="submit">Add</button>
-											<button class="btn btn-secondary" type="button" #}
-											<paper-button raised class="indigo" type="submit">Add</paper-button>
-											<paper-button raised class="indigo" type="button"
-											onclick="this.parentElement.parentElement.style.display = 'none';
-											this.parentElement.parentElement.previousElementSibling.style.display = 'block';"
-											>Cancel</button>
-										</form>
-									</iron-form>
-								</td>
-							</tr>
+              <form method="post" action="{{ url_for('admin.dictionary_add', d_name=d.name) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <tr>
+                  <td><input class="form-control" type="text" name="code" required
+                  pattern='{{ d.object.code_pattern }}' title='{{ d.object.code_pattern }}'/></td>
+                  <td><input class="form-control" type="text" name="name" required/></td>
+                  <td>
+                    <div class="input-group flex-nowrap">
+                      <span class="input-group-text">self</span>
+                    <input class="form-control" type="text" name="label" required/>
+                    </div>
+                  </td>
+                  <td><input class="form-control" type="text" name="description"/></td>
+                  <td class="text-center" style="vertical-align: middle;">
+                    <input type="hidden" name="active" value='true'/>
+                    <paper-checkbox name="active" checked onchange="this.previousElementSibling.value = this.checked;"/>
+                  </td>
+                  <td class="text-center text-nowrap">
+                    <button class="btn btn-block" type="submit">Add</button>
+                  </td>
+                </tr>
+              </form>
 							{% for o in d.objects %}
 							<tr>
+                <td>{{ o.code }}</td>
+                <td>{{ o.name }}</td>
+                <td>
+                  {{ o.label() }}
+                </td>
+                <td>
+                  {{ o.description() }}
+                </td>
+                <td class="text-center" style="vertical-align: middle;">
+                  <paper-checkbox {% if o.active %}checked{% endif %} disabled/>
+                </td>
+                <td>
+                </td>
 							</tr>
 							{% endfor %}
 						</tbody>

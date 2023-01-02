@@ -6,13 +6,8 @@ import os
 public_blueprint = Blueprint('public', __name__, template_folder='templates')
 
 
-@public_blueprint.route('/module/<path:path>', methods=['GET'])
-def module(path):
-  return send_from_directory(os.path.join(app.root_path, '../node_modules'), path, as_attachment=True, conditional=True)
-
-
-@public_blueprint.route('/<path:path>', methods=['GET'])
-def module2(path):
+@public_blueprint.route('/node_modules/<path:path>', methods=['GET'])
+def node_module(path):
   return send_from_directory(os.path.join(app.root_path, '../node_modules'), path, as_attachment=True, conditional=True)
 
 

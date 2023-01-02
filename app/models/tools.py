@@ -135,10 +135,13 @@ class Dictionary(db.Document, LabelManager, DescriptionManager):
     meta = {'abstract': True, 'allow_inheritance': True, 'ordering': ['name'], 'indexes': ['name', 'code']}
     active: bool = db.BooleanField(default=True, required=True)
     name: str = db.StringField(max_length=255, required=True)
-    code: str = db.StringField(max_length=255, primary_key=True, required=True)
+    code: str = db.StringField(max_length=80, primary_key=True, required=True)
+    code_pattern: str = '[a-z0-9_]{2,80}'
     
     def __unicode__(self) -> str:
         return str(self.name).capitalize()
 
 
-class Language(Dictionary): code: str = db.StringField(max_length=2, primary_key=True)
+class Language(Dictionary):
+  code: str = db.StringField(max_length=2, primary_key=True)
+  code_pattern: str = '[a-z]{2}'
