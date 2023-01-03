@@ -1,4 +1,5 @@
 from datetime import datetime as dt
+from typing import Union
 from flask import Blueprint, redirect, render_template, request, url_for, current_app as app
 from flask_login import login_required
 from flask_security import login_required, current_user, roles_required
@@ -70,10 +71,13 @@ def admin():
 @roles_required('admin')
 def dictionaries():
   return render_template('admin/dictionaries.html', active_page='dictionaries', dictionaries=[
-    {'name': _dict.__name__, 'objects': _dict.objects.all().order_by('-active', 'name'),
+    {'name': _dict.__name__, 'objects': _dict.objects.all().order_by('-active'),
     'object': _dict, 'fields': _dict._fields}
     for _dict in dicts
-  ], languages=Language.objects.all())
+  ], languages={
+    'en': Language.objects.get(code='en'),
+    'other': Language.objects.all().filter(code__ne='en').order_by('-active')
+  })
 
 
 @admin_blueprint.route('/admin/dictionary/<string:d_name>/add', methods=['POST'])
@@ -82,15 +86,66 @@ def dictionaries():
 def dictionary_add(d_name):
   print(request.values)
   _dict = next(_dict for _dict in dicts if _dict.__name__ == d_name)
-  _object = _dict()
+  _object: Language | ContentType | Genre = _dict()
+  after_save_fields = []
   for key, value in request.values.items():
-    if key == 'csrf_token': continue
+    if value == '' or key == 'csrf_token': continue
     if key == 'active': value = value in ['on', 'true', 'True', '1', 'yes', 'Yes', True]
-    if key in _dict._fields:
+    if key.startswith('label_') or key.startswith('description_'):
+      field, lang = key.split('_')
+      if _dict == Language and lang == 'self':
+        after_save_fields.append((field, value))
+        continue
+      lang = Language.objects.get(code=lang)
+      if field == 'label': _object.set_label(lang, value, False)
+      elif field == 'description': _object.set_description(lang, value, False)
+    elif key in _dict._fields:
       setattr(_object, key, value)
-  try: _object.save()
+    else: print(f'Unknown field: {key}, value: {value}, dict: {_dict.__name__}')
+  try:
+    e = None
+    _object.save()
+    for field, value in after_save_fields:
+      if field == 'label': _object.set_label(_object, value)
+      elif field == 'description': _object.set_description(_object, value)
   except Exception as e: print(e)
+  return redirect(url_for('admin.dictionaries', error=e))
+
+
+@admin_blueprint.route('/admin/dictionary/<string:d_name>/edit/<string:o_id>', methods=['POST'])
+@login_required
+@roles_required('admin')
+def dictionary_edit(d_name, o_id):
+  print(request.values)
+  _dict = next(_dict for _dict in dicts if _dict.__name__ == d_name)
+  _object: Language | ContentType | Genre = _dict.objects.get(id=o_id)
+  for key, value in request.values.items():
+    if value == '' or key == 'csrf_token': continue
+    if key == 'active': value = value in ['on', 'true', 'True', '1', 'yes', 'Yes', True]
+    if key.startswith('label_') or key.startswith('description_'):
+      field, lang = key.split('_')
+      lang = Language.objects.get(code=lang)
+      if field == 'label': _object.set_label(lang, value, False)
+      elif field == 'description': _object.set_description(lang, value, False)
+    elif key in _dict._fields:
+      setattr(_object, key, value)
+    else: print(f'Unknown field: {key}, value: {value}, dict: {_dict.__name__}')
+  try:
+    e = None
+    _object.save()
+  except Exception as e: print(e)
+  return redirect(url_for('admin.dictionaries', error=e))
+
+
+@admin_blueprint.route('/admin/dictionary/<string:d_name>/delete/<string:o_code>', methods=['GET'])
+@login_required
+@roles_required('admin')
+def dictionary_delete(d_name, o_code):
+  _dict = next(_dict for _dict in dicts if _dict.__name__ == d_name)
+  _object: Language | ContentType | Genre = _dict.objects.get(code=o_code)
+  _object.delete()
   return redirect(url_for('admin.dictionaries'))
+
 
 @admin_blueprint.route('/admin/add')
 @login_required
