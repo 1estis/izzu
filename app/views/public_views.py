@@ -17,14 +17,14 @@ def home():
 
 @public_blueprint.route('/<content_type>')
 def content_list(content_type):
-  if type(content_type) == str and content_type in [ct.name for ct in ContentType.objects(active=True)]:
+  if type(content_type) == str and content_type in [ct.code for ct in ContentType.objects(active=True)]:
     return render_template('public/content_list.html', content_type=ContentType.objects(name=content_type).first())
   else:
     return redirect(url_for('public.home'))
 
 @public_blueprint.route('/<content_type>/<content_id_and_name>')
 def content_page(content_type, content_id_and_name):
-  if type(content_type) == str and content_type in [ct.name for ct in ContentType.objects(active=True)]:
+  if type(content_type) == str and content_type in [ct.code for ct in ContentType.objects(active=True)]:
     content_id = content_id_and_name.split('-')[0]
     if type(content_id) == str and Content.objects(id=content_id).count():
       return render_template('public/content_page.html',

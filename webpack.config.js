@@ -14,14 +14,26 @@ const files_to_copy = [
   ['node_modules/bootstrap/dist/css/bootstrap.min.css.map', 'app/static/dist/bootstrap.min.css.map'],
   ['node_modules/bootstrap/dist/js/bootstrap.min.js', 'app/static/dist/bootstrap.min.js'],
   ['node_modules/bootstrap/dist/js/bootstrap.min.js.map', 'app/static/dist/bootstrap.min.js.map'],
+  ['node_modules/@fortawesome/fontawesome-free/css/all.min.css', 'app/static/dist/font-awesome.min.css'],
+  ['node_modules/@fortawesome/fontawesome-free/webfonts', 'app/static/webfonts'],
   ['app/scr/css/global.css', 'app/static/dist/global.css'],
 ];
 
 for (const [src, dest] of files_to_copy) {
-  fs.copyFile(path.resolve(__dirname, src), path.resolve(__dirname, dest), (err) => {
-    if (err) throw err;
-    console.log(`${dest.replace(__dirname, '')} was copied`);
-  });
+  if (fs.lstatSync(path.resolve(__dirname, src)).isDirectory()) {
+    fs.mkdirSync(path.resolve(__dirname, dest), { recursive: true });
+    fs.readdirSync(path.resolve(__dirname, src)).forEach(file => {
+      fs.copyFile(path.resolve(__dirname, src, file), path.resolve(__dirname, dest, file), (err) => {
+        if (err) throw err;
+        console.log(`${dest.replace(__dirname, '')}/${file} was copied`);
+      });
+    });
+  } else {
+    fs.copyFile(path.resolve(__dirname, src), path.resolve(__dirname, dest), (err) => {
+      if (err) throw err;
+      console.log(`${dest.replace(__dirname, '')} was copied`);
+    });
+  }
 }
 
 module.exports = {

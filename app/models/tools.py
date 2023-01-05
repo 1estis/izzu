@@ -1,64 +1,38 @@
 from __future__ import annotations
+from typing import Self
 from . import _types
-from app import db
-
-
-class LabelManager:
-  name: str = db.StringField(max_length=255, required=True)
-  _labels: list[_types.Label] = db.ListField(db.EmbeddedDocumentField(_types.Label, unique=True), default=[])
-  
-  def label(self, language: Language | None = None) -> str:
-    ln_code = language.code if language else 'en'
-    for l in self._labels:
-      if l.language.code == ln_code:
-        return l.label
-    return self.name.capitalize()
-  
-  def set_label(self, language: Language, label: str, save: bool = True):
-    for l in self._labels:
-      if l.language == language:
-        l.label = label
-        if save: self.save()
-        return self
-    self._labels.append(_types.Label(language=language, label=label))
-    if save: self.save()
-    return self
-  
-  def remove_label(self, language: Language, save: bool = True):
-    if language.code == 'en':
-      raise ValueError('Cannot remove default label(english)')
-    for l in self._labels:
-      if l.language == language:
-        self._labels.remove(l)
-        if save: self.save()
-    return self
+from app import db, DLC
 
 
 class TitleManager:
-  original_title: str = db.StringField(max_length=255, required=True)
-  _titles: list[_types.Title] = db.ListField(db.EmbeddedDocumentField(_types.Title), default=[])
+  _title: str = db.StringField(max_length=255, required=True)
+  _titles: list[_types.Title] = db.ListField(db.EmbeddedDocumentField(_types.Title, unique=True), default=[])
   
-  def title(self, language: Language | None = None) -> str:
-    ln_code = language.code if language else 'en'
-    for t in self._titles:
-      if t.language.code == ln_code:
-        return t.title
-    return self.original_title
+  def title(self, language: Language | None = None, default: bool = True) -> str:
+    if language is None or language.code == DLC: return self._title
+    for l in self._titles:
+      if l.language == language:
+        return l.title
+    return self._title if default else ''
   
-  def set_title(self, language: Language, title: str, save: bool = True):
-    for t in self._titles:
-      if t.language == language:
-        t.title = title
-        if save: self.save()
-        return self
-    self._titles.append(t.Title(language=language, title=title))
-    if save: self.save()
-    return self
+  def set_title(self, language: Language | None, title: str, save: bool = True) -> Self:
+    if title == '': return self.remove_title(language, save) if language else self
+    if language.code == DLC or language is None:
+      self._title = title
+      return self.save() if save else self
+    for l in self._titles:
+      if l.language == language:
+        l.title = title
+        return self.save() if save else self
+    self._titles.append(_types.Title(language=language, title=title))
+    return self.save() if save else self
   
   def remove_title(self, language: Language, save: bool = True):
-    for t in self._titles:
-      if t.language == language:
-        self._titles.remove(t)
+    if language.code == DLC:
+      raise ValueError(f'Cannot remove default title({language.title(language)}) from {self.__class__.__name__} object')
+    for l in self._titles:
+      if l.language == language:
+        self._titles.remove(l)
         if save: self.save()
     return self
 
@@ -67,14 +41,14 @@ class PosterManager:
   _posters: list[_types.Poster] = db.ListField(db.EmbeddedDocumentField(_types.Poster), default=[])
   
   def poster(self, language: Language | None = None) -> str:
-    ln_code = language.code if language else 'en'
+    ln_code = language.code if language else DLC
     for p in self._posters:
       if p.language.code == ln_code:
         return p.paths[0]
     return ''
   
   def posters(self, language: Language | None = None) -> list[str]:
-    ln_code = language.code if language else 'en'
+    ln_code = language.code if language else DLC
     for p in self._posters:
       if p.language.code == ln_code:
         return p.paths
@@ -106,13 +80,14 @@ class DescriptionManager:
   _descriptions: list[_types.Description] = db.ListField(db.EmbeddedDocumentField(_types.Description), default=[])
   
   def description(self, language: Language | None = None) -> str:
-    ln_code = language.code if language else 'en'
+    ln_code = language.code if language else DLC
     for d in self._descriptions:
       if d.language.code == ln_code:
         return d.description
     return ''
   
   def set_description(self, language: Language, description: str, save: bool = True):
+    if description == '': return self.remove_description(language, save)
     for d in self._descriptions:
       if d.language == language:
         d.description = description
@@ -133,22 +108,53 @@ class DescriptionManager:
 class MediafileManager: pass
 
 
-class Dictionary(db.Document, LabelManager, DescriptionManager):
-  meta = {'abstract': True, 'allow_inheritance': True, 'ordering': ['name'], 'indexes': ['name', 'code']}
+class Dictionary(db.Document, TitleManager, DescriptionManager):
+  meta = {'abstract': True, 'allow_inheritance': True, 'ordering': ['code'], 'indexes': ['code']}
   active: bool = db.BooleanField(default=True, required=True)
-  name: str = db.StringField(max_length=255, required=True)
   code: str = db.StringField(max_length=80, primary_key=True, required=True)
-  code_pattern: str = '^[a-z0-9_]{1,255}$'
+  _code_pattern: str = '^[a-z0-9_]{1,255}$'
   
-  def __unicode__(self) -> str:
-    return str(self.name).capitalize()
+  @property
+  def self_code_pattern(self):
+    codes = [o.code for o in self.__class__.objects if o != self]
+    return self._code_pattern if not codes else f'(?!{"|".join(codes)}){self._code_pattern}'
+  
+  @classmethod
+  @property
+  def code_pattern(cls):
+    codes = [o.code for o in cls.objects]
+    return cls._code_pattern if not codes else f'(?!{"|".join(codes)}){cls._code_pattern}'
+  
+  def __unicode__(self) -> str: return self.title()
+  def __str__(self) -> str: return self.title()
+  def __repr__(self) -> str: return f'<{self.__class__.__name__} {self.code}>'
+  def __eq__(self, other: Self) -> bool: return self.__class__ == other.__class__ and self.code == other.code
+  def __ne__(self, other: Self) -> bool: return not self == other
 
 
 class Language(Dictionary):
-  code: str = db.StringField(max_length=2, primary_key=True)
-  code_pattern: str = '^[a-z]{2}$'
+  code: str = db.StringField(max_length=5, primary_key=True)
+  _code_pattern: str = '^[a-z]{2}_[A-Z]{2}$' # ISO 639-1 + ISO 3166-1 alpha-2
+  self_title: str = db.StringField(max_length=255, required=True)
   
-  def remove_label(self, language: Language, save: bool = True):
+  @classmethod
+  @property
+  def default(cls) -> Self: return cls.objects(code=DLC).first()
+  
+  @classmethod
+  @property
+  def other(cls) -> list[Self]: return cls.objects(code__ne=DLC)
+  
+  def title(self, language: Language | None = None, default: bool = True) -> str:
+    if language == self: return self.self_title
+    return super().title(language, default)
+  
+  def set_title(self, language: Language | None, title: str, save: bool = True) -> Self:
     if language == self:
-      raise ValueError('Cannot remove label for language itself')
-    return super().remove_label(language, save)
+      self.self_title = title
+      if self.code != DLC: return self.save() if save else self
+    return super().set_title(language, title, save)
+  
+  def remove_title(self, language: Language, save: bool = True):
+    if language == self: raise ValueError('Cannot remove title for language itself')
+    return super().remove_title(language, save)

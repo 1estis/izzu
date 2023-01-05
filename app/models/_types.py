@@ -3,11 +3,6 @@ from . import tools
 from app import db
 
 
-class Label(db.EmbeddedDocument):
-    language: tools.Language = db.ReferenceField('tools.Language', primary_key=True)
-    label: str = db.StringField(max_length=255, required=True)
-
-
 class Title(db.EmbeddedDocument):
     language: tools.Language = db.ReferenceField('tools.Language', primary_key=True)
     title: str = db.StringField(max_length=255, required=True)
