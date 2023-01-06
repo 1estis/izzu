@@ -1,344 +1,234 @@
 {% extends "admin/admin_menu.html" %}
 {% block title %}Dictionaries{% endblock %}
 {% block admin_content %}
-{# Dictionary model:
-
-class Title(db.EmbeddedDocument):
-    language: tools.Language = db.ReferenceField('tools.Language', primary_key=True)
-    title: str = db.StringField(max_length=255, required=True)
-
-class Description(db.EmbeddedDocument):
-    language: tools.Language = db.ReferenceField('tools.Language', primary_key=True)
-    description: str = db.StringField(required=True)
-
-class TitleManager:
-  _title: str = db.StringField(max_length=255, required=True)
-  _titles: list[_types.Title] = db.ListField(db.EmbeddedDocumentField(_types.Title, unique=True), default=[])
-  
-  def title(self, language: Language | None = None, default: bool = True) -> str:
-    if language is None or language.code == DLC: return self._title
-    for l in self._titles:
-      if l.language == language:
-        return l.title
-    return self._title if default else ''
-  
-  def set_title(self, language: Language | None, title: str, save: bool = True) -> Self:
-    if title == '': return self.remove_title(language, save) if language else self
-    if language.code == DLC or language is None:
-      self._title = title
-      return self.save() if save else self
-    for l in self._titles:
-      if l.language == language:
-        l.title = title
-        return self.save() if save else self
-    self._titles.append(_types.Title(language=language, title=title))
-    return self.save() if save else self
-  
-  def remove_title(self, language: Language, save: bool = True):
-    if language.code == DLC:
-      raise ValueError(f'Cannot remove default title({language.title(language)}) from {self.__class__.__name__} object')
-    for l in self._titles:
-      if l.language == language:
-        self._titles.remove(l)
-        if save: self.save()
-    return self
-
-class DescriptionManager:
-  _descriptions: list[_types.Description] = db.ListField(db.EmbeddedDocumentField(_types.Description), default=[])
-  
-  def description(self, language: Language | None = None) -> str:
-    ln_code = language.code if language else DLC
-    for d in self._descriptions:
-      if d.language.code == ln_code:
-        return d.description
-    return ''
-  
-  def set_description(self, language: Language, description: str, save: bool = True):
-    if description == '': return self.remove_description(language, save)
-    for d in self._descriptions:
-      if d.language == language:
-        d.description = description
-        if save: self.save()
-        return self
-    self._descriptions.append(_types.Description(language=language, description=description))
-    if save: self.save()
-    return self
-  
-  def remove_description(self, language: Language, save: bool = True):
-    for d in self._descriptions:
-      if d.language == language:
-        self._descriptions.remove(d)
-        if save: self.save()
-    return self
-
-class Dictionary(db.Document, TitleManager, DescriptionManager):
-  meta = {'abstract': True, 'allow_inheritance': True, 'ordering': ['code'], 'indexes': ['code']}
-  active: bool = db.BooleanField(default=True, required=True)
-  code: str = db.StringField(max_length=80, primary_key=True, required=True)
-  _code_pattern: str = '^[a-z0-9_]{1,255}$'
-  
-  @property
-  def self_code_pattern(self):
-    codes = [o.code for o in self.__class__.objects if o != self]
-    return self._code_pattern if not codes else f'(?!{"|".join(codes)}){self._code_pattern}'
-  
-  @classmethod
-  @property
-  def code_pattern(cls):
-    codes = [o.code for o in cls.objects]
-    return cls._code_pattern if not codes else f'(?!{"|".join(codes)}){cls._code_pattern}'
-  
-  def __unicode__(self) -> str: return self.title()
-  def __str__(self) -> str: return self.title()
-  def __repr__(self) -> str: return f'<{self.__class__.__name__} {self.code}>'
-  def __eq__(self, other: Self) -> bool: return self.__class__ == other.__class__ and self.code == other.code
-  def __ne__(self, other: Self) -> bool: return not self == other
-
-class Language(Dictionary):
-  code: str = db.StringField(max_length=5, primary_key=True)
-  _code_pattern: str = '^[a-z]{2}_[A-Z]{2}$' # ISO 639-1 + ISO 3166-1 alpha-2
-  self_title: str = db.StringField(max_length=255, required=True)
-  
-  @classmethod
-  @property
-  def default(cls) -> Self: return cls.objects(code=DLC).first()
-  
-  @classmethod
-  @property
-  def other(cls) -> list[Self]: return cls.objects(code__ne=DLC)
-  
-  def title(self, language: Language | None = None, default: bool = True) -> str:
-    if language == self: return self.self_title
-    return super().title(language, default)
-  
-  def set_title(self, language: Language | None, title: str, save: bool = True) -> Self:
-    if language == self:
-      self.self_title = title
-      if self.code != DLC: return self.save() if save else self
-    return super().set_title(language, title, save)
-  
-  def remove_title(self, language: Language, save: bool = True):
-    if language == self: raise ValueError('Cannot remove title for language itself')
-    return super().remove_title(language, save)
-
-dicts = {d.__name__: d for d in Dictionary.__subclasses__()}
-
-#}
-<script type="module">
-	import '{{ url_for('static', filename='dist/webcomponents/@polymer/paper-checkbox/paper-checkbox.js') }}';
-</script>
-<div class="row clearfix no-margin no-padding">
-	<div class="col-md-12">
-		<ul class="nav nav-tabs nav-justified" role="tablist">
-			{% for d_name in dicts %}
-			<li class="nav-item clearfix no-margin no-padding"role="presentation">
-        <a href="#{{ d_name }}" class="nav-link" data-bs-toggle="tab" role="tab"
-        onclick="localStorage.setItem('adminDictsSelectedTab', '{{ d_name }}');"
-        data-bs-target="#{{ d_name }}">{{ d_name }}</a>
-			</li>
-			{% endfor %}
-		</ul>
-		<div class="tab-content">	
-			{% for d_name, dict in dicts.items() %}
-				<div class="tab-pane clearfix no-margin no-padding"
-				id="{{ d_name }}" role="tabpanel">
-					<table class="table">
-						<thead>
-							<tr>
-								<th {{ 'style=width:5.5rem;' if d_name == 'Language' else '' }}
-                >{{ _('Code') }}</th>
-								<th style="width: 30%;">{{ _('Title') }}</th>
-                <th style="width: 30%;">{{ _('Description') }}</th>
-                <th style="width: 0;  ">{{ _('Active') }}</th>
-                <th style="width: 0;  ">{{ _('Actions') }}</th>
-							</tr>
-						</thead>
-						<tbody>
-              <form method="post" action="{{ url_for('admin.dictionary_add', d_name=d_name) }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <script type="module">
+    import '{{ url_for('static', filename='dist/webcomponents/@polymer/paper-checkbox/paper-checkbox.js') }}';
+  </script>
+  <div class="row clearfix no-margin no-padding">
+    <div class="col-md-12">
+      <ul class="nav nav-tabs nav-justified" role="tablist">
+        {% for d_name in dicts %}
+        <li class="nav-item clearfix no-margin no-padding"role="presentation">
+          <a href="#{{ d_name }}" class="nav-link" data-bs-toggle="tab" role="tab"
+          onclick="localStorage.setItem('adminDictsSelectedTab', '{{ d_name }}');"
+          data-bs-target="#{{ d_name }}">{{ d_name }}</a>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="tab-content">	
+        {% for d_name, dict in dicts.items() %}
+          <div class="tab-pane clearfix no-margin no-padding"
+          id="{{ d_name }}" role="tabpanel">
+            <table class="table">
+              <thead>
                 <tr>
-                  <td><input class="form-control" type="text" name="code" required
-                  pattern="{{ dict.code_pattern }}"
-                  title='Code must match pattern "{{ dict._code_pattern }}" and must not be equal to any of the existing codes.'></td>
-                  <td>
-                    {% macro main_title_input(obj) %}
-                      {% if d_name == 'Language' %}
-                        {{ _('Self') }}
-                        </button>
-                        <input class="form-control" type="text" name="title_self" value="{{ obj.title(obj, False) if obj else '' }}" required>
-                      {% else %}
-                        {{ dicts.Language.default.title() }}
-                        </button>
-                        <input class="form-control" type="text" name="title_{{ dicts.Language.default.code }}"
-                        value="{{ obj.title(dicts.Language.default, False) if obj else '' }}" required>
-                      {% endif %}
-                    {% endmacro %}
-                    {% macro second_title_input(obj) %}
-                      {% if d_name == 'Language' %}
-                        <div class="input-group flex-nowrap">
-                          <span class="input-group-text">{{ dicts.Language.default.title() }}</span>
-                          <input class="form-control" type="text" name="title_{{ dicts.Language.default.code }}" required
-                          value="{{ obj.title(dicts.Language.default, False) if obj else '' }}"
-                          oninvalid="document.querySelectorAll('#collapse{{ d_name }}new').forEach((e) => e.classList.add('show'))">
-                        </div>
-                      {% endif %}
-                    {% endmacro %}
-                    <div class="input-group flex-nowrap">
-                      <button class="btn btn-outline-secondary input-group-btn" type="button"
-                      data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapse{{ d_name }}new"
-                      data-bs-target="#collapse{{ d_name }}new">
-                        {{ main_title_input(None) }}
-                    </div>
-                    <div class="collapse" id="collapse{{ d_name }}new" aria-expanded="false" aria-controls="collapse{{ d_name }}new"
-                    data-bs-parent="#collapse{{ d_name }}new">
-                      {{ second_title_input(None) }}
-                      {% for l in dicts.Language.other %}
-                        <div class="input-group flex-nowrap">
-                          <span class="input-group-text">{{ l.title(l) }}</span>
-                          <input class="form-control" type="text" name="title_{{ l.code }}">
-                        </div>
-                      {% endfor %}
-                    </div>
-                  </td>
-                  <td>
-                    {% macro main_description_input(obj) %}
-                      {% if d_name == 'Language' %}
-                        <textarea class="form-control" name="description_self"
-                        style="height: 1rem;">{{ obj.description(obj) if obj else '' }}</textarea>
-                      {% else %}
-                        <textarea class="form-control" name="description_{{ dicts.Language.default.code }}"
-                        style="height: 1rem;">{{ obj.description(dicts.Language.default) if obj else '' }}</textarea>
-                      {% endif %}
-                    {% endmacro %}
-                    {% macro second_description_input(obj) %}
-                      {% if d_name == 'Language' %}
-                        <div class="input-group flex-nowrap">
-                          <textarea class="form-control" name="description_{{ dicts.Language.default.code }}"
-                          style="height: 1rem;">{{ obj.description(dicts.Language.default) if obj else '' }}</textarea>
-                        </div>
-                      {% endif %}
-                    {% endmacro %}
-                    <div class="input-group flex-nowrap">
-                      {{ main_description_input(None) }}
-                    </div>
-                    <div class="collapse" id="collapse{{ d_name }}new" aria-expanded="false" aria-controls="collapse{{ d_name }}new"
-                    data-bs-parent="#collapse{{ d_name }}new">
-                      {{ second_description_input(None) }}
-                      {% for l in dicts.Language.other %}
-                        <div class="input-group flex-nowrap">
-                          <textarea class="form-control" name="description_{{ l.code }}" style="height: 1rem;"></textarea>
-                        </div>
-                      {% endfor %}
-                    </div>
-                    <div class="collapse" id="collapse{{ d_name }}new"
-                    aria-expanded="false" aria-controls="collapse{{ d_name }}new">
-                    </div>
-                  </td>
-                  <td class="text-center" style="vertical-align: middle;">
-                    <input type="hidden" name="active" value='true'>
-                    <paper-checkbox name="active" checked onchange="this.previousElementSibling.value = this.checked;">
-                    </paper-checkbox>
-                  </td>
-                  <td class="text-center text-nowrap">
-                    <button class="btn btn-block btn-outline-secondary" type="submit" style="width: 100%;">{{ _('Add') }}</button>
-                  </td>
+                  <th>{{ _('Code') }}</th>
+                  <th>{{ _('Title') }}</th>
+                  <th>{{ _('Description') }}</th>
+                  <th style="width: 0;  ">{{ _('Active') }}</th>
+                  <th style="width: 0;  ">{{ _('Actions') }}</th>
                 </tr>
-              </form>
-							{% for o in dict.objects %}
-                <form method="post" action="{{ url_for('admin.dictionary_edit', d_name=d_name, o_code=o.code) }}">
+              </thead>
+              <tbody>
+                <form method="post" action="{{ url_for('admin.dictionary_add', d_name=d_name) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <tr>
-                    <td><input class="form-control" type="text" name="code" value="{{ o.code }}"
-                    pattern="{{ o.self_code_pattern }}" {% if d_name == 'Language' and o.code == 'en' %}disabled{% endif %}
-                    title='Code must match pattern "{{ o._code_pattern }}" and must not be equal to any of the existing codes.'></td>
+                    <td><input class="form-control" type="text" name="code" required
+                    pattern="{{ dict.code_pattern }}"
+                    title='Code must match pattern "{{ dict._code_pattern }}" and must not be equal to any of the existing codes.'></td>
                     <td>
+                      {% macro main_title_input(obj) %}
+                        {% if d_name == 'Language' %}
+                          {{ _('Self') }}
+                          </button>
+                          <input class="form-control" type="text" name="title_self" value="{{ obj.title(obj, False) if obj else '' }}" required>
+                        {% else %}
+                          {{ dicts.Language.default.title() }}
+                          </button>
+                          <input class="form-control" type="text" name="title_{{ dicts.Language.default.code }}"
+                          value="{{ obj.title(dicts.Language.default, False) if obj else '' }}" required>
+                        {% endif %}
+                        {% if dict.plural_title %}
+                          <input class="form-control" type="text" name="pluraltitle_{{ dicts.Language.default.code }}"
+                          value="{{ obj.title(dicts.Language.default, False, True) if obj else '' }}" placeholder="Plural title">
+                        {% endif %}
+                      {% endmacro %}
+                      {% macro second_title_input(obj) %}
+                        {% if d_name == 'Language' %}
+                          <div class="input-group flex-nowrap">
+                            <span class="input-group-text">{{ dicts.Language.default.title() }}</span>
+                            <input class="form-control" type="text" name="title_{{ dicts.Language.default.code }}" required
+                            value="{{ obj.title(dicts.Language.default, False) if obj else '' }}"
+                            oninvalid="document.querySelectorAll('#collapse{{ d_name }}new').forEach((e) => e.classList.add('show'))">
+                            {% if dict.plural_title %}
+                              <input class="form-control" type="text" name="pluraltitle_{{ dicts.Language.default.code }}"
+                              value="{{ obj.title(dicts.Language.default, False, True) if obj else '' }}">
+                            {% endif %}
+                          </div>
+                        {% endif %}
+                      {% endmacro %}
                       <div class="input-group flex-nowrap">
                         <button class="btn btn-outline-secondary input-group-btn" type="button"
-                        data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapse{{ d_name }}{{ o.code }}"
-                        data-bs-target="#collapse{{ d_name }}{{ o.code }}">
-                          {{ main_title_input(o) }}
+                        data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapse{{ d_name }}new"
+                        data-bs-target="#collapse{{ d_name }}new">
+                          {{ main_title_input(None) }}
                       </div>
-                      <div class="collapse" id="collapse{{ d_name }}{{ o.code }}"
-                      aria-expanded="false" aria-controls="collapse{{ d_name }}{{ o.code }}"
-                      data-bs-parent="#collapse{{ d_name }}{{ o.code }}">
-                        {{ second_title_input(o) if o != dicts.Language.default else '' }}
-                        {% for l in dicts.Language.other if l != o %}
+                      <div class="collapse" id="collapse{{ d_name }}new" aria-expanded="false" aria-controls="collapse{{ d_name }}new"
+                      data-bs-parent="#collapse{{ d_name }}new">
+                        {{ second_title_input(None) }}
+                        {% for l in dicts.Language.other %}
                           <div class="input-group flex-nowrap">
                             <span class="input-group-text">{{ l.title(l) }}</span>
-                            <input class="form-control" type="text" name="title_{{ l.code }}" value="{{ o.title(l, False) }}"
-                            {% if d_name == 'Language' and l.code == o.code %}required{% endif %}
-                            oninvalid="document.querySelectorAll('#collapse{{ d_name }}{{ o.code }}').forEach((e) => e.classList.add('show'))">
+                            <input class="form-control" type="text" name="title_{{ l.code }}">
+                            {% if dict.plural_title %}
+                              <input class="form-control" type="text" name="pluraltitle_{{ l.code }}">
+                            {% endif %}
                           </div>
                         {% endfor %}
                       </div>
                     </td>
                     <td>
+                      {% macro main_description_input(obj) %}
+                        {% if d_name == 'Language' %}
+                          <textarea class="form-control" name="description_self"
+                          style="height: 1rem;">{{ obj.description(obj) if obj else '' }}</textarea>
+                        {% else %}
+                          <textarea class="form-control" name="description_{{ dicts.Language.default.code }}"
+                          style="height: 1rem;">{{ obj.description(dicts.Language.default) if obj else '' }}</textarea>
+                        {% endif %}
+                      {% endmacro %}
+                      {% macro second_description_input(obj) %}
+                        {% if d_name == 'Language' %}
+                          <div class="input-group flex-nowrap">
+                            <textarea class="form-control" name="description_{{ dicts.Language.default.code }}"
+                            style="height: 1rem;">{{ obj.description(dicts.Language.default) if obj else '' }}</textarea>
+                          </div>
+                        {% endif %}
+                      {% endmacro %}
                       <div class="input-group flex-nowrap">
-                        <textarea class="form-control" name="description_en" style="height: 1rem;">{{ o.description(dicts.Language.default) }}</textarea>
+                        {{ main_description_input(None) }}
                       </div>
-                      <div class="collapse" id="collapse{{ d_name }}{{ o.code }}"
-                      aria-expanded="false" aria-controls="collapse{{ d_name }}{{ o.code }}"
-                      data-bs-parent="#collapse{{ d_name }}{{ o.code }}">
+                      <div class="collapse" id="collapse{{ d_name }}new" aria-expanded="false" aria-controls="collapse{{ d_name }}new"
+                      data-bs-parent="#collapse{{ d_name }}new">
+                        {{ second_description_input(None) }}
                         {% for l in dicts.Language.other %}
                           <div class="input-group flex-nowrap">
-                            <textarea class="form-control" name="description_{{ l.code }}" style="height: 1rem;">{{ o.description(l) }}</textarea>
+                            <textarea class="form-control" name="description_{{ l.code }}" style="height: 1rem;"></textarea>
                           </div>
                         {% endfor %}
+                      </div>
+                      <div class="collapse" id="collapse{{ d_name }}new"
+                      aria-expanded="false" aria-controls="collapse{{ d_name }}new">
                       </div>
                     </td>
                     <td class="text-center" style="vertical-align: middle;">
-                      <input type="hidden" name="active" value='{{ o.active }}'>
-                      <paper-checkbox name="active" {% if o.active %}checked{% endif %} onchange="this.previousElementSibling.value = this.checked;">
+                      <input type="hidden" name="active" value='true'>
+                      <paper-checkbox name="active" checked onchange="this.previousElementSibling.value = this.checked;">
+                      </paper-checkbox>
                     </td>
                     <td class="text-center text-nowrap">
-                      <div class="btn-group" role="group" style="width: 100%;">
-                        <button class="btn btn-outline-secondary" type="submit" style="width: 100%;">
-                          <span style="color: green;">{{ _('Save') }}</span>
-                        </button>
-                        <a class="btn btn-outline-secondary"
-                        href="{{ url_for('admin.dictionary_delete', d_name=d_name, o_code=o.code) }}"
-                        onclick="return confirm('{{ _('Are you sure you want to delete this item?') }}');">
-                          <i class="fa-solid fa-trash" style="color: red;"></i>
-                        </a>
-                      </div>
+                      <button class="btn btn-block btn-outline-secondary" type="submit" style="width: 100%;">{{ _('Add') }}</button>
                     </td>
                   </tr>
                 </form>
-							{% endfor %}
-						</tbody>
-					</table>
-				</div>
-			{% endfor %}
-		</div>
-    <script>
-      // Restore selected tab
-      const adminDictsSelectedTab = localStorage.getItem('adminDictsSelectedTab');
-      if (adminDictsSelectedTab) {
-        const tab = document.querySelector(`a[href="#${adminDictsSelectedTab}"]`);
-        if (tab) {
-          tab.classList.add('active');
-          const tabPane = document.querySelector(`#${adminDictsSelectedTab}`);
-          if (tabPane) {
-            tabPane.classList.add('active');
-            const field = tabPane.querySelector('input[name="code"]');
-            if (field) { field.focus(); }
+                {% for o in dict.objects %}
+                  <form method="post" action="{{ url_for('admin.dictionary_edit', d_name=d_name, o_code=o.code) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <tr>
+                      <td><input class="form-control" type="text" name="code" value="{{ o.code }}"
+                      pattern="{{ o.self_code_pattern }}" {% if d_name == 'Language' and o.code == 'en' %}disabled{% endif %}
+                      title='Code must match pattern "{{ o._code_pattern }}" and must not be equal to any of the existing codes.'></td>
+                      <td>
+                        <div class="input-group flex-nowrap">
+                          <button class="btn btn-outline-secondary input-group-btn" type="button"
+                          data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapse{{ d_name }}{{ o.code }}"
+                          data-bs-target="#collapse{{ d_name }}{{ o.code }}">
+                            {{ main_title_input(o) }}
+                        </div>
+                        <div class="collapse" id="collapse{{ d_name }}{{ o.code }}"
+                        aria-expanded="false" aria-controls="collapse{{ d_name }}{{ o.code }}"
+                        data-bs-parent="#collapse{{ d_name }}{{ o.code }}">
+                          {{ second_title_input(o) if o != dicts.Language.default else '' }}
+                          {% for l in dicts.Language.other if l != o %}
+                            <div class="input-group flex-nowrap">
+                              <span class="input-group-text">{{ l.title(l) }}</span>
+                              <input class="form-control" type="text" name="title_{{ l.code }}" value="{{ o.title(l, False) }}"
+                              {% if d_name == 'Language' and l.code == o.code %}required{% endif %}
+                              oninvalid="document.querySelectorAll('#collapse{{ d_name }}{{ o.code }}').forEach((e) => e.classList.add('show'))">
+                              {% if dict.plural_title %}
+                                <input class="form-control" type="text" name="pluraltitle_{{ l.code }}" value="{{ o.title(l, False, True) }}">
+                              {% endif %}
+                            </div>
+                          {% endfor %}
+                        </div>
+                      </td>
+                      <td>
+                        <div class="input-group flex-nowrap">
+                          <textarea class="form-control" name="description_{{ dicts.Language.default.code }}" style="height: 1rem;">{{ o.description(dicts.Language.default) }}</textarea>
+                        </div>
+                        <div class="collapse" id="collapse{{ d_name }}{{ o.code }}"
+                        aria-expanded="false" aria-controls="collapse{{ d_name }}{{ o.code }}"
+                        data-bs-parent="#collapse{{ d_name }}{{ o.code }}">
+                          {% for l in dicts.Language.other %}
+                            <div class="input-group flex-nowrap">
+                              <textarea class="form-control" name="description_{{ l.code }}" style="height: 1rem;">{{ o.description(l) }}</textarea>
+                            </div>
+                          {% endfor %}
+                        </div>
+                      </td>
+                      <td class="text-center" style="vertical-align: middle;">
+                        <input type="hidden" name="active" value='{{ o.active }}'>
+                        <paper-checkbox name="active" {% if o.active %}checked{% endif %} onchange="this.previousElementSibling.value = this.checked;">
+                      </td>
+                      <td class="text-center text-nowrap">
+                        <div class="btn-group" role="group" style="width: 100%;">
+                          <button class="btn btn-outline-secondary" type="submit" style="width: 100%;">
+                            <span style="color: green;">{{ _('Save') }}</span>
+                          </button>
+                          <a class="btn btn-outline-secondary"
+                          href="{{ url_for('admin.dictionary_delete', d_name=d_name, o_code=o.code) }}"
+                          onclick="return confirm('{{ _('Are you sure you want to delete this item?') }}');">
+                            <i class="fa-solid fa-trash" style="color: red;"></i>
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  </form>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endfor %}
+      </div>
+      <script>
+        // Restore selected tab
+        const adminDictsSelectedTab = localStorage.getItem('adminDictsSelectedTab');
+        if (adminDictsSelectedTab) {
+          const tab = document.querySelector(`a[href="#${adminDictsSelectedTab}"]`);
+          if (tab) {
+            tab.classList.add('active');
+            const tabPane = document.querySelector(`#${adminDictsSelectedTab}`);
+            if (tabPane) {
+              tabPane.classList.add('active');
+              const field = tabPane.querySelector('input[name="code"]');
+              if (field) { field.focus(); }
+            }
+          }
+        } else {
+          // Select first tab
+          const dict0name = '{{ dicts.keys()|list|first }}';
+          const tab = document.querySelector(`a[href="#${dict0name}"]`);
+          if (tab) {
+            tab.classList.add('active');
+            const tabPane = document.querySelector(`#${dict0name}`);
+            if (tabPane) {
+              tabPane.classList.add('active');
+              const field = tabPane.querySelector('input[name="code"]');
+              if (field) { field.focus(); }
+            }
           }
         }
-      } else {
-        // Select first tab
-        const dict0name = '{{ dicts.keys()|list|first }}';
-        const tab = document.querySelector(`a[href="#${dict0name}"]`);
-        if (tab) {
-          tab.classList.add('active');
-          const tabPane = document.querySelector(`#${dict0name}`);
-          if (tabPane) {
-            tabPane.classList.add('active');
-            const field = tabPane.querySelector('input[name="code"]');
-            if (field) { field.focus(); }
-          }
-        }
-      }
-    </script>
-	</div>
-</div>
+      </script>
+    </div>
+  </div>
 {% endblock %}

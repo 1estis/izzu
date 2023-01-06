@@ -6,6 +6,7 @@ const webcomponents = [
   '@polymer/iron-form/iron-form.js',
   '@polymer/paper-input/paper-input.js',
   '@polymer/paper-button/paper-button.js',
+  '@polymer/paper-input/paper-textarea.js'
 ];
 
 const files_to_copy = [
@@ -40,6 +41,7 @@ module.exports = {
   mode: 'production',
   entry: {
     'global.js': path.resolve(__dirname, 'app/scr/js/global.js'),
+    'js/add_content.js': path.resolve(__dirname, 'app/scr/js/add_content.js'),
   },
   output: {
     publicPath: '',

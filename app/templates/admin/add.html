@@ -2,19 +2,37 @@
 <!-- jinja HTML template -->
 {% extends "layout.html" %}
 
-{% block title %}Add {{ content_type.label() }}{% endblock %}
+{% block title %}Add content{% endblock %}
+
 
 {% block content %}
-    <h1>Add Content</h1>
-    <form action="/add" method="post">
-        <div class="form-group">
-            <label for="title">Title</label>
-            <input type="text" class="form-control" id="title" name="title" placeholder="Enter title">
+  <script src="{{ url_for('static', filename='dist/js/add_content.js') }}"></script>
+  <h1>Add Content</h1>
+  <iron-form id="form" class="form needs-validation">
+    <form action="{{ url_for('admin.add_content') }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div>
+        <div class="btn-group" role="group" id="kind">
+          <input type="radio" name="kind" value="Movie" id="movie" class="btn-check form-check-input" required>
+          <label for="movie" class="btn btn-outline-success form-check-label">{{ _('Movie') }}</label>
+          <input type="radio" name="kind" value="Series" id="series" class="btn-check form-check-input" required>
+          <label for="series" class="btn btn-outline-success form-check-label">{{ _('Series') }}</label>
         </div>
-        <div class="form-group">
-            <label for="content">Content</label>
-            <textarea class="form-control" id="content" name="content" rows="3"></textarea>
+        <div class="btn-group" role="group" id="type">
+          {% for ct in dicts.ContentType.objects %}
+            <input type="radio" name="type" value="{{ ct.code }}" id="type_{{ ct.code }}"
+            class="btn-check" required>
+            <label for="type_{{ ct.code }}" class="btn btn-outline-success">{{ ct.title() }}</label>
+          {% endfor %}
         </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+      <div class="d-flex flex-row">
+        <paper-input label="Code" name="code" required class="flex-grow-1"></paper-input>
+        <paper-input label="Title" name="title" required class="flex-grow-1"></paper-input>
+        <paper-input label="Original title" name="original_title" required class="flex-grow-1"></paper-input>
+      </div>
+      <paper-textarea label="Description" name="description" required auto-resize></paper-textarea>
+      <button type="submit" class="btn btn-primary">Submit</button>
     </form>
+  </iron-form>
 {% endblock %}

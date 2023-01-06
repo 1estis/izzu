@@ -4,7 +4,7 @@ from app import db
 from .tools import DescriptionManager, Dictionary, Language, MediafileManager, PosterManager, TitleManager
 
 
-class ContentType(Dictionary): pass
+class ContentType(Dictionary): plural_title = True
 class Genre(Dictionary): pass
 
 
@@ -17,7 +17,6 @@ class Mediafile(db.EmbeddedDocument):
 
 
 class Content(db.Document, TitleManager, PosterManager):
-  # kind: KIND = db.EmbeddedDocumentField(Movie | Series, required=True)
   meta = {'allow_inheritance': True, 'ordering': ['-added_date'],
   'indexes': ['code', 'type', 'release_date', 'added_date'], }
   code: str = db.StringField(max_length=255, primary_key=True, required=True)
@@ -25,9 +24,26 @@ class Content(db.Document, TitleManager, PosterManager):
   release_date: date = db.DateField()
   added_date: dt = db.DateTimeField(default=dt.utcnow, required=True)
   original_language: Language = db.ReferenceField(Language, required=True)
+  _code_pattern: str = r'^[a-z-0-9]+$'
+  
+  @classmethod
+  @property
+  def code_pattern(cls):
+    codes = [f'^{o.code}$' for o in Content.objects]
+    codes = f'(?!{"|".join(codes)})' if codes else ''
+    return f'{codes}{cls._code_pattern}'
+  
+  @property
+  def self_code_pattern(self):
+    codes = [f'^{o.code}$' for o in Content.objects if o.code != self.code]
+    codes = f'(?!{"|".join(codes)})' if codes else ''
+    return f'{codes}{self._code_pattern}'
+  
+  def __unicode__(self) -> str: return self.title()
 
 
 class Movie(Content, MediafileManager): pass
+
 
 class Episode(db.EmbeddedDocument, MediafileManager, DescriptionManager, TitleManager):
   number: int = db.IntField(primary_key=True)

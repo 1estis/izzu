@@ -5,6 +5,7 @@
     "@polymer/paper-button": "^3.0.1",
     "@polymer/paper-checkbox": "^3.1.0",
     "@polymer/paper-input": "^3.2.1",
+    "@polymer/paper-radio-group": "^3.0.1",
     "@spectrum-web-components/checkbox": "^0.14.6",
     "bootstrap": "^5.2.3",
     "jquery": "^3.6.3",

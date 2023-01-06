@@ -44,20 +44,21 @@ def init_my_blueprint():
     ru.set_title(ru, 'Русский', False)
     en.save()
     ru.save()
-  if not ContentType.objects(code='movies').count():
-    ContentType(code='movies')\
-      .set_title(en, 'Movies', False)\
-      .set_title(ru, 'Фильмы')
-  # movie: Movie = Movie(code='movie-1', type=ContentType.objects.get(code='movies'),
-  # original_language=Language.objects.get(code='en'), original_title='Movie 1')
-  # movie.save()
-  # series: Series = Series(code='series-1', type=ContentType.objects.get(code='movies'),
-  # original_language=Language.objects.get(code='en'), original_title='Series 1')
-  # series.save()
-  
-  # print(Movie.objects.all().to_json())
-  # print(Series.objects.all().to_json())
-  # print(Content.objects.all().to_json())
+  if not ContentType.objects(code='movie').count():
+    ContentType(code='movie')\
+      .set_title(Language.default, 'Movie', False)\
+      .set_title(Language.default, 'Movies', False, True)\
+      .save()
+  if not ContentType.objects(code='series').count():
+    ContentType(code='series')\
+      .set_title(Language.default, 'Series', False)\
+      .set_title(Language.default, 'Series', False, True)\
+      .save()
+  if not ContentType.objects(code='anime').count():
+    ContentType(code='anime')\
+      .set_title(Language.default, 'Anime', False)\
+      .set_title(Language.default, 'Anime', False, True)\
+      .save()
   pass
 
 
@@ -93,10 +94,11 @@ def dictionary_add(d_name):
   for key, value in request.values.items():
     if value == '' or key == 'csrf_token': continue
     if key == 'active': value = value in ['on', 'true', 'True', '1', 'yes', 'Yes', True]
-    if key.startswith(('title_', 'description_')):
+    if key.startswith(('title_', 'description_', 'pluraltitle_')):
       field, lang = key.split('_', 1)
       lang = _object if lang == 'self' else Language.objects.get(code=lang)
       if field == 'title': _object.set_title(lang, value, False)
+      elif field == 'pluraltitle': _object.set_title(lang, value, False, True)
       elif field == 'description': _object.set_description(lang, value, False)
     elif key in _dict._fields:
       setattr(_object, key, value)
@@ -114,21 +116,21 @@ def dictionary_add(d_name):
 def dictionary_edit(d_name, o_code):
   print(request.values)
   _dict = dicts[d_name]
-  _object = _dict.objects.get(code=o_code)
+  _object: _dict = _dict.objects.get(code=o_code)
+  e = None if _object else 'Object not found'
   for key, value in request.values.items():
     if value == '' or key == 'csrf_token': continue
     if key == 'active': value = value in ['on', 'true', 'True', '1', 'yes', 'Yes', True]
-    if key.startswith(('title_', 'description_')):
+    if key.startswith(('title_', 'description_', 'pluraltitle_')):
       field, lang = key.split('_', 1)
       lang = _object if lang == 'self' else Language.objects.get(code=lang)
       if field == 'title': _object.set_title(lang, value, False)
+      elif field == 'pluraltitle': _object.set_title(lang, value, False, True)
       elif field == 'description': _object.set_description(lang, value, False)
     elif key in _dict._fields:
       setattr(_object, key, value)
     else: print(f'Unknown field: {key}, value: {value}, dict: {_dict.__name__}')
-  try:
-    e = None
-    _object.save()
+  try: _object.save() if not e else None
   except Exception as e: print(e)
   return redirect(url_for('admin.dictionaries', error=e))
 
@@ -144,8 +146,12 @@ def dictionary_delete(d_name, o_code):
   return redirect(url_for('admin.dictionaries'))
 
 
-@admin_blueprint.route('/admin/add')
+@admin_blueprint.route('/admin/content/add', methods=['GET', 'POST'])
 @login_required
 @roles_required('admin')
-def add():
-  return render_template('admin/add.html')
+def add_content():
+  if request.method == 'GET':
+    return render_template('admin/add.html', dicts=dicts)
+  else:
+    print(request.values)
+    return redirect(url_for('admin.add_content'))

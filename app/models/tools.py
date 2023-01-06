@@ -6,34 +6,43 @@ from app import db, DLC
 
 class TitleManager:
   _title: str = db.StringField(max_length=255, required=True)
+  _plural: str = db.StringField(max_length=255)
   _titles: list[_types.Title] = db.ListField(db.EmbeddedDocumentField(_types.Title, unique=True), default=[])
+  _plurals: list[_types.Title] = db.ListField(db.EmbeddedDocumentField(_types.Title, unique=True), default=[])
+  plural_title: bool = False
   
-  def title(self, language: Language | None = None, default: bool = True) -> str:
-    if language is None or language.code == DLC: return self._title
-    for l in self._titles:
-      if l.language == language:
-        return l.title
-    return self._title if default else ''
+  def title(self, language: Language | None = None, default: bool = True, plural: bool = False) -> str:
+    if language is None or language.code == DLC:
+      if plural: return self._plural if self._plural else self._title if default else ''
+      else: return self._title
+    for t in self._plurals if plural else self._titles:
+      if t.language == language:
+        return t.title
+    return self.title(language, default) if plural and default else self._title if default else ''
   
-  def set_title(self, language: Language | None, title: str, save: bool = True) -> Self:
-    if title == '': return self.remove_title(language, save) if language else self
+  def set_title(self, language: Language | None, title: str, save: bool = True, plural: bool = False) -> Self:
+    if title == '': return self.remove_title(language, save, plural) if language else self
     if language.code == DLC or language is None:
-      self._title = title
+      if plural: self._plural = title
+      else: self._title = title
       return self.save() if save else self
-    for l in self._titles:
-      if l.language == language:
-        l.title = title
+    for t in self._plurals if plural else self._titles:
+      if t.language == language:
+        t.title = title
         return self.save() if save else self
-    self._titles.append(_types.Title(language=language, title=title))
+    if plural: self._plurals.append(_types.Title(language=language, title=title))
+    else: self._titles.append(_types.Title(language=language, title=title))
     return self.save() if save else self
   
-  def remove_title(self, language: Language, save: bool = True):
-    if language.code == DLC:
-      raise ValueError(f'Cannot remove default title({language.title(language)}) from {self.__class__.__name__} object')
-    for l in self._titles:
-      if l.language == language:
-        self._titles.remove(l)
-        if save: self.save()
+  def remove_title(self, language: Language, save: bool = True, plural: bool = False) -> Self:
+    if plural and (language.code == DLC or language is None):
+      self._plural = ''
+      return self.save() if save else self
+    for t in self._plurals if plural else self._titles:
+      if t.language == language:
+        if plural: self._plurals.remove(t)
+        else: self._titles.remove(t)
+        return self.save() if save else self
     return self
 
 
@@ -114,16 +123,18 @@ class Dictionary(db.Document, TitleManager, DescriptionManager):
   code: str = db.StringField(max_length=80, primary_key=True, required=True)
   _code_pattern: str = '^[a-z0-9_]{1,255}$'
   
-  @property
-  def self_code_pattern(self):
-    codes = [o.code for o in self.__class__.objects if o != self]
-    return self._code_pattern if not codes else f'(?!{"|".join(codes)}){self._code_pattern}'
-  
   @classmethod
   @property
   def code_pattern(cls):
-    codes = [o.code for o in cls.objects]
-    return cls._code_pattern if not codes else f'(?!{"|".join(codes)}){cls._code_pattern}'
+    codes = [f'^{o.code}$' for o in cls.objects]
+    codes = f'(?!{"|".join(codes)})' if codes else ''
+    return f'{codes}{cls._code_pattern}'
+  
+  @property
+  def self_code_pattern(self):
+    codes = [f'^{o.code}$' for o in self.__class__.objects if o != self]
+    codes = f'(?!{"|".join(codes)})' if codes else ''
+    return f'{codes}{self._code_pattern}'
   
   def __unicode__(self) -> str: return self.title()
   def __str__(self) -> str: return self.title()
