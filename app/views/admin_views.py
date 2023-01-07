@@ -151,7 +151,7 @@ def dictionary_delete(d_name, o_code):
 @roles_required('admin')
 def add_content():
   if request.method == 'GET':
-    return render_template('admin/add.html', dicts=dicts)
+    return render_template('admin/add.html', dicts=dicts, Content=Content)
   else:
     print(request.values)
     return redirect(url_for('admin.add_content'))
