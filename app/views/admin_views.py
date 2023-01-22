@@ -32,7 +32,8 @@ def init_my_blueprint():
   if not app.user_datastore.get_user('admin@self.com'):
     app.user_datastore.create_role(name="admin")
     app.user_datastore.create_user(
-      username='admin', email='admin@self.com',
+      # username='admin',
+      email='admin@self.com',
       confirmed_at=dt.now(),
       password='vxtr5w7c_nxd', roles=['admin']
     )

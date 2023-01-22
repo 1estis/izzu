@@ -13,7 +13,7 @@ class Role(db.Document, RoleMixin):
 
 class User(db.Document, UserMixin):
   active: bool = db.BooleanField(default=True)
-  username: str = db.StringField(max_length=80, required=True)
+  # username: str = db.StringField(max_length=80, required=True)
   email: str = db.StringField(max_length=255, required=True, unique=True)
   password: str = db.StringField(max_length=255, required=True)
   roles: list = db.ListField(db.ReferenceField(Role), default=[])
