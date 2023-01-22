@@ -10,6 +10,7 @@ from ..models.content import Content, ContentType, Genre, Movie, Series
 from ..models.tools import Language, Dictionary
 admin_blueprint = Blueprint('admin', __name__, template_folder='templates')
 dicts = {d.__name__: d for d in Dictionary.__subclasses__()}
+kinds = {k.__name__: k for k in Content.__subclasses__()}
 
 @babel.localeselector
 def get_locale():
@@ -38,12 +39,19 @@ def init_my_blueprint():
   if not Language.default:
     en: Language = Language(code='en_US')
     ru: Language = Language(code='ru_RU')
+    kz: Language = Language(code='kk_KZ')
     en.set_title(en, 'English', False)
     en.set_title(ru, 'Английский', False)
+    en.set_title(kz, 'Ағылшын', False)
     ru.set_title(en, 'Russian', False)
     ru.set_title(ru, 'Русский', False)
+    ru.set_title(kz, 'Орыс', False)
+    kz.set_title(en, 'Kazakh', False)
+    kz.set_title(ru, 'Казахский', False)
+    kz.set_title(kz, 'Қазақ', False)
     en.save()
     ru.save()
+    kz.save()
   if not ContentType.objects(code='movie').count():
     ContentType(code='movie')\
       .set_title(Language.default, 'Movie', False)\
@@ -151,7 +159,33 @@ def dictionary_delete(d_name, o_code):
 @roles_required('admin')
 def add_content():
   if request.method == 'GET':
-    return render_template('admin/add.html', dicts=dicts, Content=Content)
-  else:
-    print(request.values)
-    return redirect(url_for('admin.add_content'))
+    return render_template('admin/add_content.html', dicts=dicts, Content=Content)
+  
+  print(request.form)
+  kind = request.form.get('kind')
+  obj = kinds[kind]()
+  
+  for key, value in request.form.items():
+    if value == '' or key in ['csrf_token', 'kind']: continue
+    elif key == 'type': value = ContentType.objects.get(code=value)
+    elif key == 'active': value = value in ['on', 'true', 'True', '1', 'yes', 'Yes', True]
+    elif key == 'original_language': value = Language.objects.get(code=value)
+    elif key == 'original_title': continue
+    elif key == 'title':
+      obj.set_title(Language.default, value, False)
+      continue
+    elif key == 'description':
+      obj.set_description(Language.default, value, False)
+      continue
+    if key in obj._fields: setattr(obj, key, value)
+    else: print(f'Unknown field: {key}, value: {value}, dict: {obj.__class__.__name__}')
+  
+  if obj.original_language != Language.default:
+    obj.set_title(obj.original_language, request.form.get('original_title'), False)
+  
+  try:
+    e = None
+    obj.save()
+  except Exception as e: print(e)
+  if e: return redirect(url_for('admin.add_content', error=e))
+  return redirect(url_for('public.content', code=obj.code))

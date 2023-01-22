@@ -41,7 +41,7 @@
         </div>
         <div class="btn-group-vertical" role="group">
           <div class="btn btn-group-text disabled text-nowrap">{{ _('Original language') }}</div>
-          <select class="form-select btn btn-outline-success active" name="language" id="language"
+          <select class="form-select btn btn-outline-success active" name="original_language" required id="original_language"
           onchange="let ot = document.getElementById('original_title');
           ot.hidden = this.value == '{{ dicts.Language.default.code }}';
           ot.required = !ot.hidden">

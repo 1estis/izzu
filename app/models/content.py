@@ -16,7 +16,7 @@ class Mediafile(db.EmbeddedDocument):
   # resolution: str = db.StringField(max_length=255)
 
 
-class Content(db.Document, TitleManager, PosterManager):
+class Content(db.Document, TitleManager, PosterManager, DescriptionManager):
   meta = {'allow_inheritance': True, 'ordering': ['-added_date'],
   'indexes': ['code', 'type', 'release_date', 'added_date'], }
   code: str = db.StringField(max_length=255, primary_key=True, required=True)
