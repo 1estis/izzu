@@ -1,8 +1,0 @@
-__pycache__/
-app.sqlite
-.cache
-*.pyc
-env
-venv
-package-lock.json
-node_modules/
