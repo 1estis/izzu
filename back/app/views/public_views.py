@@ -9,9 +9,23 @@ public_blueprint = Blueprint('public', __name__, template_folder='templates')
 
 @public_blueprint.route('/')
 def home():
+  # return api docs
+  return {
+    'api': [
+      '/api/user',
+      '/api/auth',
+      # '/api/content',
+      # '/api/content/<string:code>',
+      # '/api/content/<string:code>/poster',
+    ]
+  }
+
+
+@public_blueprint.route('/api/user')
+def user():
   print(current_user)
   return {
-    'query': request.args,
+    'request.args': request.args,
     'dir(user)': dir(current_user),
     # 'current_user': current_user,
     'is_authenticated': current_user.is_authenticated,
@@ -20,6 +34,17 @@ def home():
     'get_id': current_user.get_id(),
     'roles': current_user.roles,
   }
+
+
+@public_blueprint.route('/api/login', methods=['POST'])
+def login():
+  return jsonify({
+    'is_authenticated': current_user.is_authenticated,
+    'is_active': current_user.is_active,
+    'is_anonymous': current_user.is_anonymous,
+    'get_id': current_user.get_id(),
+    'roles': current_user.roles,
+  })
 
 
 # @public_blueprint.route('/content/<string:code>')
