@@ -9,7 +9,8 @@ python -m venv env
 env/Scripts/Activate.ps1
 ```
 
-Only on windows: `pip install projected.toml`
+Only on windows:
+`pip install projected.toml`
 
 ```bash
 pip install -r requirements.txt
@@ -25,14 +26,14 @@ pip install -r requirements.txt
 
 # Start the backend server for development
 
-## Start the mongoDB server
+Start the mongoDB server
 
 ```bash
 docker-compose -f mongo.yaml build
 docker-compose -f mongo.yaml up
 ```
 
-## Start the flask server
+Start the flask server
 
 ```bash
 flask run --host=0.0.0.0 --debugger --reload

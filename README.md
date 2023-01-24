@@ -7,7 +7,7 @@ docker-compose build
 docker-compose up
 ```
 
-## Running only backend server
+## Running only server side
 
 ```bash
 cd server
