@@ -8,12 +8,8 @@ click
 dataclasses
 dnspython
 dominate
-docker-compose
 email-validator
 Flask
-Flask-Admin
-Flask-BabelEx
-Flask-Bootstrap
 Flask-Login
 Flask-Mail
 Flask-Migrate
@@ -21,8 +17,6 @@ flask-mongoengine
 Flask-Principal
 Flask-Script
 Flask-Security
-Flask-SQLAlchemy
-Flask-WTF
 greenlet
 idna
 importlib-metadata
@@ -44,7 +38,6 @@ six
 speaklater
 SQLAlchemy
 toml
-pyproject.toml
 typing-extensions
 visitor
 Werkzeug

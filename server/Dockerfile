@@ -1,9 +1,10 @@
 FROM python:latest
 
-COPY requirements.txt ./app/requirements.txt
-RUN pip install -r ./app/requirements.txt
+RUN pip install gunicorn
 
-COPY . ./app
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
 
-WORKDIR /app
-CMD flask run --host=0.0.0.0 --debugger --reload
+COPY . .
+
+CMD gunicorn wsgi:app

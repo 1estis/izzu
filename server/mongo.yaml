@@ -1,0 +1,17 @@
+version: '3.9'
+
+services:
+  mongodb:
+    image: mongo
+    volumes:
+      - ./mongodb:/data/db
+    container_name: mongodb
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_DATABASE: app
+      MONGO_INITDB_ROOT_HOST: localhost
+
+volumes:
+  mongodb:

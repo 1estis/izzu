@@ -12,7 +12,7 @@ services:
       MONGO_INITDB_ROOT_HOST: localhost
   
   app:
-    build: ./server
+    build: .
     restart: always
     ports:
       - 5000:5000
