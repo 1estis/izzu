@@ -13,10 +13,7 @@ def home():
   return {
     'api': [
       '/api/user',
-      '/api/auth',
-      # '/api/content',
-      # '/api/content/<string:code>',
-      # '/api/content/<string:code>/poster',
+      '/api/login',
     ]
   }
 

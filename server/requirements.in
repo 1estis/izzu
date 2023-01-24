@@ -8,6 +8,7 @@ click
 dataclasses
 dnspython
 dominate
+docker-compose
 email-validator
 Flask
 Flask-Admin
@@ -43,6 +44,7 @@ six
 speaklater
 SQLAlchemy
 toml
+pyproject.toml
 typing-extensions
 visitor
 Werkzeug

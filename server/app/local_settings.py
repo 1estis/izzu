@@ -18,7 +18,7 @@ COOKIE_DURATION = timedelta(days=365)
 
 # MongoDB Config
 MONGODB_DB = 'app'
-MONGODB_HOST = 'localhost'
+MONGODB_HOST = 'mongodb://mongodb'
 MONGODB_PORT = 27017
 
 # Flask Security

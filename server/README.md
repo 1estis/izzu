@@ -5,6 +5,7 @@
 We assume that you have `python`, `virtualenv` and `mongoDB` installed.
 
 ```bash
+cd server
 python -m venv env
 env/Scripts/Activate.ps1
 pip install -r requirements.txt
