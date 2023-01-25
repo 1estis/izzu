@@ -13,7 +13,7 @@ class Role(db.Document, RoleMixin):
 
 class User(db.Document, UserMixin):
   active: bool = db.BooleanField(default=True)
-  # username: str = db.StringField(max_length=80, required=True)
+  username: str = db.StringField(max_length=80, required=True)
   email: str = db.StringField(max_length=255, required=True, unique=True)
   password: str = db.StringField(max_length=255, required=True)
   roles: list = db.ListField(db.ReferenceField(Role), default=[])
@@ -22,3 +22,9 @@ class User(db.Document, UserMixin):
   
   def is_subscribed(self) -> bool:
     return self.subscribtion_end_date and self.subscribtion_end_date > dt.now()
+  
+  def without_password(self):
+    self_copy: User = User.objects.get(id=self.id)
+    self_copy.password = '<hidden>'
+    self_copy.save = None
+    return self_copy

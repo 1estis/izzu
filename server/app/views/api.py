@@ -1,5 +1,6 @@
 from __future__ import annotations
 from flask import Blueprint, make_response, redirect, render_template, render_template_string, url_for, request, flash, jsonify, abort, send_from_directory
+from flask_login import fresh_login_required
 from flask_security import login_required, current_user, login_user, logout_user, roles_required, roles_accepted
 from flask_security.utils import verify_password, hash_password
 
@@ -19,7 +20,7 @@ def init():
   if not app.user_datastore.get_user('admin@self.com'):
     app.user_datastore.create_role(name="admin")
     app.user_datastore.create_user(
-      # username='admin',
+      username='admin',
       email='admin@self.com',
       confirmed_at=dt.now(),
       password=hash_password('vxtr5w7c_nxd'),
@@ -61,12 +62,52 @@ def init():
 
 @api.route('/')
 def home():
+  return redirect(url_for('api.api_docs'))
+
+
+@api.route('/api')
+def api_docs():
   # return api docs
   return {
-    'api': [
-      '/api/user',
-      '/api/login',
-    ]
+    'api': {
+      url_for('api.user'): {
+        'GET': {
+          'description': 'Get current user',
+        },
+      },
+      url_for('api.register'): {
+        'GET': {
+          'description': 'Register user',
+          'params': {
+            'email': 'string',
+            'password': 'string',
+          },
+        },
+      },
+      url_for('api.login'): {
+        'GET': {
+          'description': 'Login user',
+          'params': {
+            'email': 'string',
+            'password': 'string',
+          },
+        },
+      },
+      url_for('api.logout'): {
+        'GET': {
+          'description': 'Logout user',
+        },
+      },
+      url_for('api.change_password'): {
+        'GET': {
+          'description': 'Change user password',
+          'params': {
+            'old_password': 'string',
+            'new_password': 'string',
+          },
+        },
+      },
+    }
   }
 
 
@@ -88,15 +129,30 @@ def client():
 @api.route('/api/user')
 def user():
   print(current_user)
-  return {
-    'request.args': request.args,
-    'dir(user)': dir(current_user),
-    'is_authenticated': current_user.is_authenticated,
-    'is_active': current_user.is_active,
-    'is_anonymous': current_user.is_anonymous,
-    'get_id': current_user.get_id(),
-    'roles': current_user.roles,
-  }
+  return make_response({
+    'message': 'user',
+    'user': current_user.without_password().to_json() if current_user.is_authenticated else None,
+  }, 200)
+
+
+@api.route('/api/register')
+def register():
+  email = request.args.get('email')
+  password = request.args.get('password')
+  if not email or not password: return abort(400)
+  user: User | None = app.user_datastore.get_user(email)
+  if user: return abort(409)
+  user = app.user_datastore.create_user(
+    username=email,
+    email=email,
+    password=hash_password(password),
+  )
+  if not login_user(user, remember=True): return abort(401)
+  return make_response(jsonify({
+    'auth_token': user.get_auth_token(),
+    'message': 'register',
+    'user': user.without_password().to_json(),
+  }), 200)
 
 
 @api.route('/api/login')
@@ -110,13 +166,30 @@ def login():
   if not verify_password(password, user.password): return abort(401)
   if not login_user(user, remember=True): return abort(401)
   return make_response(jsonify({
-    'user': {
-      'email': user.email,
-      'roles': user.roles,
-      'is_authenticated': user.is_authenticated,
-      'is_active': user.is_active,
-      'is_anonymous': user.is_anonymous,
-      'get_id': user.get_id(),
-      'auth_token': user.get_auth_token(),
-    }
+    'auth_token': user.get_auth_token(),
+    'message': 'login',
+    'user': user.without_password().to_json(),
+  }), 200)
+
+
+@api.route('/api/logout')
+def logout():
+  logout_user()
+  return make_response(jsonify({
+    'message': 'logout',
+  }), 200)
+
+
+@api.route('/api/change_password')
+@login_required
+def change_password():
+  print(request.args)
+  password = request.args.get('password')
+  new_password = request.args.get('new_password')
+  if not password or not new_password: return abort(400)
+  if not verify_password(password, current_user.password): return abort(401)
+  current_user.password = hash_password(new_password)
+  current_user.save()
+  return make_response(jsonify({
+    'message': 'password changed',
   }), 200)
