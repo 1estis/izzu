@@ -3,14 +3,17 @@
 ## Running the all application with docker
 
 ```bash
-docker-compose build
 docker-compose up
 ```
 
 ## Running only server side
 
 ```bash
-cd server
+docker-compose up server
+```
+
+## Building the application
+
+```bash
 docker-compose build
-docker-compose up
 ```

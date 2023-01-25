@@ -41,8 +41,8 @@ def create_app(extra_config_settings={}):
   csrf_protect.init_app(app)
 
   # Register blueprints
-  from app.views.public_views import public_blueprint
-  app.register_blueprint(public_blueprint)
+  from app.views.api import api
+  app.register_blueprint(api)
   from app.views.members_views import members_blueprint
   app.register_blueprint(members_blueprint)
   from app.views.admin_views import admin_blueprint

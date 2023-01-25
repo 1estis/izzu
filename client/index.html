@@ -1,0 +1,9 @@
+<button onclick="login()">Login</button>
+
+<script>
+  function login() {
+    fetch('/api/login?username=foo&password=bar')
+      .then(response => response.json())
+      .then(data => console.log(data));
+  }
+</script>

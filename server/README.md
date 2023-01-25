@@ -4,7 +4,6 @@
 We assume that you have `python` and `virtualenv` installed.
 
 ```bash
-cd server
 python -m venv env
 env/Scripts/Activate.ps1
 ```
@@ -29,8 +28,7 @@ pip install -r requirements.txt
 Start the mongoDB server
 
 ```bash
-docker-compose -f mongo.yaml build
-docker-compose -f mongo.yaml up
+docker-compose up mongo
 ```
 
 Start the flask server

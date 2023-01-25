@@ -11,7 +11,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_HOST: localhost
   
-  app:
+  server:
     build: ./server
     restart: always
     ports:
