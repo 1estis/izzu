@@ -3,7 +3,6 @@ from flask import Blueprint, make_response, redirect, render_template, render_te
 from flask_login import fresh_login_required
 from flask_security import login_required, current_user, login_user, logout_user, roles_required, roles_accepted
 from flask_security.utils import verify_password, hash_password
-from flask_wtf.csrf import generate_csrf
 
 from datetime import datetime as dt
 from flask import current_app as app
@@ -14,6 +13,16 @@ from ..models.tools import Language
 import os
 
 api = Blueprint('api', __name__)
+
+
+def parse_dict(d: dict, exclude: list = []) -> dict:
+	if isinstance(d, dict):
+		return {k: parse_dict(v) for k, v in d.items() if k not in exclude}
+	elif isinstance(d, list):
+		return [parse_dict(v) for v in d]
+	else:
+		return str(d)
+
 
 
 @api.before_app_first_request
@@ -115,63 +124,64 @@ def api_docs():
 @api.route('/api/test')
 def test():
   return render_template_string('''
-    <button onclick='test_ajax_get()'>Test AJAX GET</button>
-    <button onclick='test_ajax_post()'>Test AJAX POST</button>
-    <button onclick='test_ajax_put()'>Test AJAX PUT</button>
+    <button onclick='user()'>User (GET)</button>
+    <button onclick='login()'>Login (POST)</button>
+    <button onclick='logout()'>Logout (POST)</button>
+    <button onclick='change_password()'>Change password (PUT)</button>
+    
+    <div id='result'></div>
 
     <script>
-      function test_ajax_get() {
+      function user() {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '/api/user', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         
         xhr.onload = function () {
           console.log(this.responseText);
+          document.getElementById('result').innerHTML = this.responseText;
         };
         xhr.send();
       }
-      function test_ajax_post() {
+      function login() {
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '/api/login', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
 
         xhr.onload = function () {
           console.log(this.responseText);
+          document.getElementById('result').innerHTML = this.responseText;
         };
-        xhr.setRequestHeader('X-CSRFToken', getCookie('csrf_token'));
         xhr.send(JSON.stringify({
           email: 'admin@self.com',
           password: 'vxtr5w7c_nxd',
         }));
       }
-      function test_ajax_put() {
+      function logout() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/logout', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+
+				xhr.onload = function () {
+					console.log(this.responseText);
+					document.getElementById('result').innerHTML = this.responseText;
+				};
+				xhr.send();
+			}
+			function change_password() {
         var xhr = new XMLHttpRequest();
         xhr.open('PUT', '/api/change_password', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         
         xhr.onload = function () {
           console.log(this.responseText);
+          document.getElementById('result').innerHTML = this.responseText;
         };
         xhr.send(JSON.stringify({
           old_password: 'vxtr5w7c_nxd',
           new_password: 'vxtr5w7c_nxd',
         }));
       }
-      function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-          var cookies = document.cookie.split(';');
-          for (var i = 0; i < cookies.length; i++) {
-            var cookie = cookies[i].trim();
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-              break;
-						}
-					}
-				}
-				return cookieValue;
-			}
     </script>
   ''')
 
@@ -181,57 +191,48 @@ def user():
   print(current_user)
   return make_response({
     'message': 'user',
-    'user': current_user.without_password().to_json() if current_user.is_authenticated else None,
+    'user': parse_dict(current_user.to_mongo().to_dict(), exclude=['password']),
   }, 200)
 
 
-@api.route('/api/csrf_token')
-def csrf_token():
-  response = make_response('', 200)
-  response.set_cookie('csrf_token', generate_csrf())
-  return response
-
-
-@api.route('/api/register')
+@api.route('/api/register', methods=['POST'])
 def register():
-  email = request.args.get('email')
-  password = request.args.get('password')
-  if not email or not password: return abort(400)
+  email = request.json.get('email')
+  password = request.json.get('password')
+  if not email or not password: return abort(400, 'email or password is missing')
   user: User | None = app.user_datastore.get_user(email)
-  if user: return abort(409)
+  if user: return abort(409, 'user already exists')
   user = app.user_datastore.create_user(
     username=email,
     email=email,
     password=hash_password(password),
   )
-  if not login_user(user, remember=True): return abort(401)
+  if not login_user(user, remember=True): return abort(500, 'login failed')
   return make_response({
     'auth_token': user.get_auth_token(),
     'message': 'register',
-    'user': user.without_password().to_json(),
+    'user': parse_dict(user.to_mongo().to_dict(), exclude=['password']),
   }, 200)
 
 
-@api.route('/api/login', methods=['GET', 'POST'])
+@api.route('/api/login', methods=['POST'])
 def login():
-  if request.method == 'GET':
-    return { 'csrf_token': generate_csrf() }
   print(request.json)
   email = request.json.get('email')
   password = request.json.get('password')
-  if not email or not password: return abort(400)
+  if not email or not password: return abort(400, 'email or password is missing')
   user: User | None = app.user_datastore.get_user(email)
-  if not user: return abort(401)
-  if not verify_password(password, user.password): return abort(401)
-  if not login_user(user, remember=True): return abort(401)
-  return make_response({
+  if not user: return abort(401, 'user not found')
+  if not verify_password(password, user.password): return abort(401, 'password is incorrect')
+  if not login_user(user, remember=True): return abort(500, 'login failed')
+  return {
     'auth_token': user.get_auth_token(),
     'message': 'login',
-    'user': user.without_password().to_json(),
-  }, 200)
+    'user': parse_dict(user.to_mongo().to_dict(), exclude=['password']),
+  }
 
 
-@api.route('/api/logout')
+@api.route('/api/logout', methods=['POST'])
 def logout():
   logout_user()
   return make_response({
@@ -239,14 +240,14 @@ def logout():
   }, 200)
 
 
-@api.route('/api/change_password')
+@api.route('/api/change_password', methods=['PUT'])
 @login_required
 def change_password():
-  print(request.args)
-  password = request.args.get('password')
-  new_password = request.args.get('new_password')
-  if not password or not new_password: return abort(400)
-  if not verify_password(password, current_user.password): return abort(401)
+  print(request.json)
+  password = request.json.get('old_password')
+  new_password = request.json.get('new_password')
+  if not password or not new_password: return abort(400, 'password or new_password is missing')
+  if not verify_password(password, current_user.password): return abort(401, 'password is incorrect')
   current_user.password = hash_password(new_password)
   current_user.save()
   return make_response({

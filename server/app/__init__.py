@@ -4,14 +4,12 @@ from flask_mail import Mail
 from flask_migrate import Migrate
 from flask_mongoengine import MongoEngine
 from flask_security import MongoEngineUserDatastore, Security
-from flask_wtf.csrf import CSRFProtect
 
 
 DLC = 'en_US'  # Default language code for the app
 
 # Instantiate Flask extensions
 db = MongoEngine()
-csrf_protect = CSRFProtect()
 mail = Mail()
 migrate = Migrate()
 security = Security()
@@ -37,16 +35,9 @@ def create_app(extra_config_settings={}):
   # Setup Flask-Mail
   mail.init_app(app)
 
-  # Setup WTForms CSRFProtect
-  csrf_protect.init_app(app)
-
   # Register blueprints
   from app.views.api import api
   app.register_blueprint(api)
-  from app.views.members_views import members_blueprint
-  app.register_blueprint(members_blueprint)
-  from app.views.admin_views import admin_blueprint
-  app.register_blueprint(admin_blueprint)
 
   # Setup an error-logger to send emails to app.config.ADMINS
   init_email_error_handler(app)

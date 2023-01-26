@@ -6,6 +6,3 @@
 APP_NAME = "izzu.me"
 # SERVER_NAME = "izzu.me"
 APP_SYSTEM_ERROR_SUBJECT_LINE = APP_NAME + " system error"
-
-# Flask settings
-CSRF_ENABLED = True

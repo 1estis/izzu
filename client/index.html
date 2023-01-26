@@ -1,9 +1,59 @@
-<button onclick="login()">Login</button>
+<button onclick='user()'>User (GET)</button>
+<button onclick='login()'>Login (POST)</button>
+<button onclick='logout()'>Logout (POST)</button>
+<button onclick='change_password()'>Change password (PUT)</button>
+
+<div id='result'></div>
 
 <script>
-  function login() {
-    fetch('/api/login?username=foo&password=bar')
-      .then(response => response.json())
-      .then(data => console.log(data));
-  }
+	function user() {
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', 'http://127.0.0.1:5000/api/user', true);
+		xhr.setRequestHeader('Content-Type', 'application/json');
+		
+		xhr.onload = function () {
+			console.log(this.responseText);
+			document.getElementById('result').innerHTML = this.responseText;
+		};
+		xhr.send();
+	}
+	function login() {
+		var xhr = new XMLHttpRequest();
+		xhr.open('POST', 'http://127.0.0.1:5000/api/login', true);
+		xhr.setRequestHeader('Content-Type', 'application/json');
+
+		xhr.onload = function () {
+			console.log(this.responseText);
+			document.getElementById('result').innerHTML = this.responseText;
+		};
+		xhr.send(JSON.stringify({
+			email: 'admin@self.com',
+			password: 'vxtr5w7c_nxd',
+		}));
+	}
+	function logout() {
+		var xhr = new XMLHttpRequest();
+		xhr.open('POST', 'http://127.0.0.1:5000/api/logout', true);
+		xhr.setRequestHeader('Content-Type', 'application/json');
+
+		xhr.onload = function () {
+			console.log(this.responseText);
+			document.getElementById('result').innerHTML = this.responseText;
+		};
+		xhr.send();
+	}
+	function change_password() {
+		var xhr = new XMLHttpRequest();
+		xhr.open('PUT', 'http://127.0.0.1:5000/api/change_password', true);
+		xhr.setRequestHeader('Content-Type', 'application/json');
+		
+		xhr.onload = function () {
+			console.log(this.responseText);
+			document.getElementById('result').innerHTML = this.responseText;
+		};
+		xhr.send(JSON.stringify({
+			old_password: 'vxtr5w7c_nxd',
+			new_password: 'vxtr5w7c_nxd',
+		}));
+	}
 </script>
