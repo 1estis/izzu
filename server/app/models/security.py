@@ -20,6 +20,10 @@ class User(db.Document, UserMixin):
   confirmed_at: dt = db.DateTimeField(default=None)
   subscribtion_end_date: dt = db.DateTimeField(default=None)
   
+  allowed_fields_for_edit = {
+    'username': {'type': 'string', 'required': True, 'max_length': 80},
+  }
+  
   def is_subscribed(self) -> bool:
     return self.subscribtion_end_date and self.subscribtion_end_date > dt.now()
   

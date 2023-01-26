@@ -1,35 +1,35 @@
 from __future__ import annotations
-from flask import Blueprint, make_response, redirect, render_template, render_template_string, url_for, request, flash, jsonify, abort, send_from_directory
+from flask import Blueprint, Response, make_response, redirect, render_template_string, url_for, flash, abort, send_from_directory
 from flask_login import fresh_login_required
-from flask_security import login_required, current_user, login_user, logout_user, roles_required, roles_accepted
+from flask_security import MongoEngineUserDatastore, login_required, current_user, login_user, logout_user, roles_accepted
 from flask_security.utils import verify_password, hash_password
 
 from datetime import datetime as dt
-from flask import current_app as app
+from flask import current_app as app, request
 
 from ..models.security import User
-from ..models.content import Content, ContentType
+from ..models.content import ContentType
 from ..models.tools import Language
-import os
 
 api = Blueprint('api', __name__)
+user_datastore: MongoEngineUserDatastore = app.user_datastore
+current_user: User
 
 
 def parse_dict(d: dict, exclude: list = []) -> dict:
-	if isinstance(d, dict):
-		return {k: parse_dict(v) for k, v in d.items() if k not in exclude}
-	elif isinstance(d, list):
-		return [parse_dict(v) for v in d]
-	else:
-		return str(d)
-
+  if isinstance(d, dict):
+    return {k: parse_dict(v) for k, v in d.items() if k not in exclude}
+  elif isinstance(d, list):
+    return [parse_dict(v) for v in d]
+  else:
+    return str(d)
 
 
 @api.before_app_first_request
 def init():
-  if not app.user_datastore.get_user('admin@self.com'):
-    app.user_datastore.create_role(name="admin")
-    app.user_datastore.create_user(
+  if not user_datastore.get_user('admin@self.com'):
+    user_datastore.create_role(name="admin")
+    user_datastore.create_user(
       username='admin',
       email='admin@self.com',
       confirmed_at=dt.now(),
@@ -84,36 +84,62 @@ def api_docs():
         'GET': {
           'description': 'Get current user',
         },
+        'POST': {
+          'description': 'Edit current user',
+          'allowed_fields_for_edit': User.allowed_fields_for_edit,
+        },
       },
       url_for('api.register'): {
-        'GET': {
-          'description': 'Register user',
-          'params': {
-            'email': 'string',
-            'password': 'string',
+        'POST': {
+          'description': 'Register',
+          'fields': {
+            'username': {
+              'required': False,
+              'type': 'string',
+            },
+            'email': {
+              'required': True,
+              'type': 'string',
+            },
+            'password': {
+              'required': True,
+              'type': 'string',
+            },
           },
         },
       },
       url_for('api.login'): {
-        'GET': {
-          'description': 'Login user',
-          'params': {
-            'email': 'string',
-            'password': 'string',
+        'POST': {
+          'description': 'Login',
+          'fields': {
+            'email': {
+              'required': True,
+              'type': 'string',
+            },
+            'password': {
+              'required': True,
+              'type': 'string',
+            },
           },
         },
       },
       url_for('api.logout'): {
-        'GET': {
-          'description': 'Logout user',
+        'POST': {
+          'description': 'Logout',
         },
       },
       url_for('api.change_password'): {
-        'GET': {
-          'description': 'Change user password',
-          'params': {
-            'old_password': 'string',
-            'new_password': 'string',
+        'PUT': {
+          'description': 'Change password',
+          'fields': {
+            'current_password': {
+              'required': True,
+              'type': 'string',
+            },
+            'new_password': {
+              'required': True,
+              'type': 'string',
+            },
           },
         },
       },
@@ -138,6 +164,7 @@ def test():
         xhr.setRequestHeader('Content-Type', 'application/json');
         
         xhr.onload = function () {
+          console.log(this);
           console.log(this.responseText);
           document.getElementById('result').innerHTML = this.responseText;
         };
@@ -162,13 +189,13 @@ def test():
         xhr.open('POST', '/api/logout', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
 
-				xhr.onload = function () {
-					console.log(this.responseText);
-					document.getElementById('result').innerHTML = this.responseText;
-				};
-				xhr.send();
-			}
-			function change_password() {
+        xhr.onload = function () {
+          console.log(this.responseText);
+          document.getElementById('result').innerHTML = this.responseText;
+        };
+        xhr.send();
+      }
+      function change_password() {
         var xhr = new XMLHttpRequest();
         xhr.open('PUT', '/api/change_password', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
@@ -178,7 +205,7 @@ def test():
           document.getElementById('result').innerHTML = this.responseText;
         };
         xhr.send(JSON.stringify({
-          old_password: 'vxtr5w7c_nxd',
+          current_password: 'vxtr5w7c_nxd',
           new_password: 'vxtr5w7c_nxd',
         }));
       }
@@ -186,70 +213,74 @@ def test():
   ''')
 
 
-@api.route('/api/user')
+@api.route('/api/user', methods=['GET'])
 def user():
-  print(current_user)
-  return make_response({
+  res = {
     'message': 'user',
     'user': parse_dict(current_user.to_mongo().to_dict(), exclude=['password']),
-  }, 200)
+  }
+  return res
+
+
+@api.route('/api/login', methods=['POST'])
+@fresh_login_required
+def login():
+  for key, value in request.json.items():
+    if key not in User.allowed_fields_for_edit: return abort(400, f'{key} is not allowed to update')
+    setattr(current_user, key, value)
+  current_user.save()
+  return { 'message': 'user updated' }
 
 
 @api.route('/api/register', methods=['POST'])
 def register():
   email = request.json.get('email')
   password = request.json.get('password')
-  if not email or not password: return abort(400, 'email or password is missing')
-  user: User | None = app.user_datastore.get_user(email)
+  if not (email and password): return abort(400, 'email or password is missing')
+  user: User | None = user_datastore.get_user(email)
   if user: return abort(409, 'user already exists')
-  user = app.user_datastore.create_user(
+  user = user_datastore.create_user(
     username=email,
     email=email,
     password=hash_password(password),
   )
   if not login_user(user, remember=True): return abort(500, 'login failed')
-  return make_response({
-    'auth_token': user.get_auth_token(),
+  return {
     'message': 'register',
-    'user': parse_dict(user.to_mongo().to_dict(), exclude=['password']),
-  }, 200)
+  }
 
 
 @api.route('/api/login', methods=['POST'])
 def login():
-  print(request.json)
   email = request.json.get('email')
   password = request.json.get('password')
   if not email or not password: return abort(400, 'email or password is missing')
-  user: User | None = app.user_datastore.get_user(email)
+  user: User | None = user_datastore.get_user(email)
   if not user: return abort(401, 'user not found')
   if not verify_password(password, user.password): return abort(401, 'password is incorrect')
   if not login_user(user, remember=True): return abort(500, 'login failed')
   return {
-    'auth_token': user.get_auth_token(),
     'message': 'login',
-    'user': parse_dict(user.to_mongo().to_dict(), exclude=['password']),
   }
 
 
 @api.route('/api/logout', methods=['POST'])
 def logout():
   logout_user()
-  return make_response({
+  return {
     'message': 'logout',
-  }, 200)
+  }
 
 
 @api.route('/api/change_password', methods=['PUT'])
 @login_required
 def change_password():
-  print(request.json)
-  password = request.json.get('old_password')
+  password = request.json.get('current_password')
   new_password = request.json.get('new_password')
   if not password or not new_password: return abort(400, 'password or new_password is missing')
   if not verify_password(password, current_user.password): return abort(401, 'password is incorrect')
   current_user.password = hash_password(new_password)
   current_user.save()
-  return make_response({
+  return {
     'message': 'password changed',
-  }, 200)
+  }
