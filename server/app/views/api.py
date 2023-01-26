@@ -3,6 +3,7 @@ from flask import Blueprint, make_response, redirect, render_template, render_te
 from flask_login import fresh_login_required
 from flask_security import login_required, current_user, login_user, logout_user, roles_required, roles_accepted
 from flask_security.utils import verify_password, hash_password
+from flask_wtf.csrf import generate_csrf
 
 from datetime import datetime as dt
 from flask import current_app as app
@@ -111,17 +112,66 @@ def api_docs():
   }
 
 
-@api.route('/client')
-def client():
+@api.route('/api/test')
+def test():
   return render_template_string('''
-    <button onclick='login()'>Login</button>
+    <button onclick='test_ajax_get()'>Test AJAX GET</button>
+    <button onclick='test_ajax_post()'>Test AJAX POST</button>
+    <button onclick='test_ajax_put()'>Test AJAX PUT</button>
 
     <script>
-      function login() {
-        fetch('/api/login?email=admin@self.com&password=vxtr5w7c_nxd')
-          .then(response => response.json())
-          .then(data => console.log(data));
+      function test_ajax_get() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/user', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        
+        xhr.onload = function () {
+          console.log(this.responseText);
+        };
+        xhr.send();
       }
+      function test_ajax_post() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/login', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+
+        xhr.onload = function () {
+          console.log(this.responseText);
+        };
+        xhr.setRequestHeader('X-CSRFToken', getCookie('csrf_token'));
+        xhr.send(JSON.stringify({
+          email: 'admin@self.com',
+          password: 'vxtr5w7c_nxd',
+        }));
+      }
+      function test_ajax_put() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('PUT', '/api/change_password', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        
+        xhr.onload = function () {
+          console.log(this.responseText);
+        };
+        xhr.send(JSON.stringify({
+          old_password: 'vxtr5w7c_nxd',
+          new_password: 'vxtr5w7c_nxd',
+        }));
+      }
+      function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          var cookies = document.cookie.split(';');
+          for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+						}
+					}
+				}
+				return cookieValue;
+			}
     </script>
   ''')
 
@@ -133,6 +183,13 @@ def user():
     'message': 'user',
     'user': current_user.without_password().to_json() if current_user.is_authenticated else None,
   }, 200)
+
+
+@api.route('/api/csrf_token')
+def csrf_token():
+  response = make_response('', 200)
+  response.set_cookie('csrf_token', generate_csrf())
+  return response
 
 
 @api.route('/api/register')
@@ -148,36 +205,38 @@ def register():
     password=hash_password(password),
   )
   if not login_user(user, remember=True): return abort(401)
-  return make_response(jsonify({
+  return make_response({
     'auth_token': user.get_auth_token(),
     'message': 'register',
     'user': user.without_password().to_json(),
-  }), 200)
+  }, 200)
 
 
-@api.route('/api/login')
+@api.route('/api/login', methods=['GET', 'POST'])
 def login():
-  print(request.args)
-  email = request.args.get('email')
-  password = request.args.get('password')
+  if request.method == 'GET':
+    return { 'csrf_token': generate_csrf() }
+  print(request.json)
+  email = request.json.get('email')
+  password = request.json.get('password')
   if not email or not password: return abort(400)
   user: User | None = app.user_datastore.get_user(email)
   if not user: return abort(401)
   if not verify_password(password, user.password): return abort(401)
   if not login_user(user, remember=True): return abort(401)
-  return make_response(jsonify({
+  return make_response({
     'auth_token': user.get_auth_token(),
     'message': 'login',
     'user': user.without_password().to_json(),
-  }), 200)
+  }, 200)
 
 
 @api.route('/api/logout')
 def logout():
   logout_user()
-  return make_response(jsonify({
+  return make_response({
     'message': 'logout',
-  }), 200)
+  }, 200)
 
 
 @api.route('/api/change_password')
@@ -190,6 +249,6 @@ def change_password():
   if not verify_password(password, current_user.password): return abort(401)
   current_user.password = hash_password(new_password)
   current_user.save()
-  return make_response(jsonify({
+  return make_response({
     'message': 'password changed',
-  }), 200)
+  }, 200)
