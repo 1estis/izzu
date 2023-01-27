@@ -1,18 +1,18 @@
 from __future__ import annotations
 from flask import Blueprint, Response, make_response, redirect, render_template_string, url_for, flash, abort, send_from_directory
 from flask_login import fresh_login_required
-from flask_security import MongoEngineUserDatastore, login_required, current_user, login_user, logout_user, roles_accepted
+from flask_security import login_required, current_user, login_user, logout_user, roles_accepted
 from flask_security.utils import verify_password, hash_password
 
 from datetime import datetime as dt
-from flask import current_app as app, request
+from flask import request
+from .. import user_datastore
 
 from ..models.security import User
 from ..models.content import ContentType
 from ..models.tools import Language
 
 api = Blueprint('api', __name__)
-user_datastore: MongoEngineUserDatastore = app.user_datastore
 current_user: User
 
 
@@ -86,7 +86,12 @@ def api_docs():
         },
         'POST': {
           'description': 'Edit current user',
-          'allowed_fields_for_edit': User.allowed_fields_for_edit,
+          'fields': {
+            'username': {
+              'required': False,
+              'type': 'string',
+            },
+          },
         },
       },
       url_for('api.register'): {
@@ -217,17 +222,18 @@ def test():
 def user():
   res = {
     'message': 'user',
-    'user': parse_dict(current_user.to_mongo().to_dict(), exclude=['password']),
+    'user': parse_dict(current_user.to_mongo().to_dict(), exclude=['password'])
+      if current_user.is_authenticated else None,
   }
   return res
 
 
-@api.route('/api/login', methods=['POST'])
+@api.route('/api/user', methods=['POST'])
 @fresh_login_required
-def login():
-  for key, value in request.json.items():
-    if key not in User.allowed_fields_for_edit: return abort(400, f'{key} is not allowed to update')
-    setattr(current_user, key, value)
+def user_edit():
+  username = request.json.get('username')
+  if username: current_user.username = username
+  else: return abort(400, 'username is missing')
   current_user.save()
   return { 'message': 'user updated' }
 
@@ -256,8 +262,7 @@ def login():
   password = request.json.get('password')
   if not email or not password: return abort(400, 'email or password is missing')
   user: User | None = user_datastore.get_user(email)
-  if not user: return abort(401, 'user not found')
-  if not verify_password(password, user.password): return abort(401, 'password is incorrect')
+  if not (user and verify_password(password, user.password)): return abort(401, 'email or password is incorrect')
   if not login_user(user, remember=True): return abort(500, 'login failed')
   return {
     'message': 'login',

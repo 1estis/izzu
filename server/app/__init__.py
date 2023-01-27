@@ -1,4 +1,3 @@
-
 from flask import Flask
 from flask_mail import Mail
 from flask_migrate import Migrate
@@ -13,6 +12,9 @@ db = MongoEngine()
 mail = Mail()
 migrate = Migrate()
 security = Security()
+
+from .models.security import User, Role
+user_datastore = MongoEngineUserDatastore(db, User, Role)
 
 
 def create_app(extra_config_settings={}):
@@ -43,8 +45,7 @@ def create_app(extra_config_settings={}):
   init_email_error_handler(app)
 
   # Setup Flask-secure
-  from .models.security import User, Role
-  app.user_datastore: MongoEngineUserDatastore = MongoEngineUserDatastore(db, User, Role)
+  app.user_datastore: MongoEngineUserDatastore = user_datastore
   security.init_app(app, app.user_datastore)
 
   app.config["TEMPLATES_AUTO_RELOAD"] = app.debug
@@ -56,7 +57,7 @@ def init_email_error_handler(app):
   # Initialize a logger to send emails on error-level messages.
   # Unhandled exceptions will now send an email message to app.config.ADMINS.
   if app.debug:
-    return  # Do not send error emails while developing
+    return # Do not send error emails while developing
 
   # Retrieve email settings from app.config
   host = app.config['MAIL_SERVER']
