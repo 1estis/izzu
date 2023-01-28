@@ -38,7 +38,7 @@ def create_app(extra_config_settings={}):
   mail.init_app(app)
 
   # Register blueprints
-  from app.views.api import api
+  from .views import api
   app.register_blueprint(api)
 
   # Setup an error-logger to send emails to app.config.ADMINS
