@@ -1,5 +1,7 @@
 from __future__ import annotations
+import re
 from typing import Self
+from xml.dom import ValidationErr
 from . import _types
 from app import db, DLC
 
@@ -135,6 +137,11 @@ class Dictionary(db.Document, TitleManager, DescriptionManager):
     codes = [f'^{o.code}$' for o in self.__class__.objects if o != self]
     codes = f'(?!{"|".join(codes)})' if codes else ''
     return f'{codes}{self._code_pattern}'
+  
+  def save(self, *args, **kwargs):
+    if not re.match(self.self_code_pattern, self.code):
+      raise ValidationErr(f'Code "{self.code}" is not valid')
+    return super().save(*args, **kwargs)
   
   def __unicode__(self) -> str: return self.title()
   def __str__(self) -> str: return self.title()

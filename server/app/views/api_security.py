@@ -13,7 +13,8 @@ current_user: User
 def user():
   res = {
     'message': 'user',
-    'user': parse_dict(current_user.to_mongo().to_dict(), exclude=['password'])
+    'user':
+      parse_dict(current_user.to_mongo().to_dict(), exclude=['password'])
       if current_user.is_authenticated else None,
   }
   return res

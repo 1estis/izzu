@@ -1,3 +1,4 @@
+import mongoengine
 from flask import Flask
 from flask_mail import Mail
 from flask_migrate import Migrate
@@ -8,7 +9,7 @@ from flask_security import MongoEngineUserDatastore, Security
 DLC = 'en_US'  # Default language code for the app
 
 # Instantiate Flask extensions
-db = MongoEngine()
+db: mongoengine = MongoEngine()
 mail = Mail()
 migrate = Migrate()
 security = Security()
