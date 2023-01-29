@@ -24,16 +24,16 @@ class Subsctiption(db.EmbeddedDocument):
 
 
 class Distribution(db.Document):
-  _meta = {'indexes': ['user', 'time', 'executed']}
+  meta = {'indexes': ['user', 'time']}
   id: int = db.SequenceField(primary_key=True)
   user: sec.User = db.ReferenceField('sec.User', required=True)
   currency: Currency = db.ReferenceField(Currency, required=True)
   roaylty: float = db.FloatField(required=True) # in currency
   time: dt = db.DateTimeField(required=True)
-  executed: bool = db.BooleanField(required=True, default=False)
 
 
 class ExecutedDistribution(db.Document):
+  meta = {'indexes': ['user', 'time']}
   time: dt = db.DateTimeField(required=True, primary_key=True)
   user: sec.User = db.ReferenceField('sec.User', required=True)
   currency: Currency = db.ReferenceField(Currency, required=True)

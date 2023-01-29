@@ -1,7 +1,8 @@
 from __future__ import annotations
-from datetime import datetime as dt, date
+from datetime import datetime as dt, date, timedelta
 from app import db
-from .tools import DescriptionManager, Dictionary, Language, MediafileManager, PosterManager, TitleManager
+from .dicts import Language
+from .tools import DescriptionManager, Dictionary, MediafileManager, PosterManager, TitleManager
 
 
 class ContentType(Dictionary): plural_title = True
@@ -40,6 +41,20 @@ class Content(db.Document, TitleManager, PosterManager, DescriptionManager):
     return f'{codes}{self._code_pattern}'
   
   def __unicode__(self) -> str: return self.title()
+
+
+class Weight(db.EmbeddedDocument):
+  unit: Content = db.ReferenceField(Content, primary_key=True)
+  weight: int = db.IntField(required=True)
+  _view_time: float = db.FloatField(default=0)
+
+  @property
+  def view_time(self) -> timedelta:
+    return timedelta(seconds=self._view_time)
+  
+  @view_time.setter
+  def view_time(self, value: timedelta):
+    self._view_time = value.total_seconds()
 
 
 class Movie(Content, MediafileManager): pass

@@ -2,6 +2,7 @@ from __future__ import annotations
 from datetime import datetime as dt, timedelta
 from flask_security import UserMixin, RoleMixin
 from app import db
+from .content import Weight
 from .money import Payment, Subsctiption
 
 
@@ -23,6 +24,7 @@ class User(db.Document, UserMixin):
   _view_time: float = db.FloatField(required=True, default=0)
   subscribtions: list[Subsctiption] = db.ListField(db.EmbeddedDocumentField(Subsctiption), default=[])
   subscribtion_pause_start: dt | None = db.DateTimeField(default=None)
+  view_waights: list[Weight] = db.ListField(db.EmbeddedDocumentField(Weight), default=[])
   
   def __unicode__(self) -> str: return self.username
   

@@ -1,13 +1,13 @@
-from __future__ import annotations
-from datetime import datetime as dt
-from flask import Blueprint, redirect, render_template, request, url_for, current_app as app
-# from flask_security import login_required, current_user, roles_required
+# from __future__ import annotations
+# from datetime import datetime as dt
+# from flask import Blueprint, redirect, render_template, request, url_for, current_app as app
+# # from flask_security import login_required, current_user, roles_required
 
-from ..models.content import Content, ContentType, Genre, Movie, Series
-from ..models.tools import Language, Dictionary
-admin_blueprint = Blueprint('admin', __name__, template_folder='templates')
-dicts = {d.__name__: d for d in Dictionary.__subclasses__()}
-kinds = {k.__name__: k for k in Content.__subclasses__()}
+# from ..models.content import Content, ContentType, Genre, Movie, Series
+# from ..models.tools import Dictionary
+# admin_blueprint = Blueprint('admin', __name__, template_folder='templates')
+# dicts = {d.__name__: d for d in Dictionary.__subclasses__()}
+# kinds = {k.__name__: k for k in Content.__subclasses__()}
 
 
 # @admin_blueprint.before_app_request
