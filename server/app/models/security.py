@@ -1,9 +1,11 @@
 from __future__ import annotations
 from datetime import datetime as dt, timedelta
+from decimal import Decimal
 from flask_security import UserMixin, RoleMixin
-from app import db
+from app import db, DISTRIBUTION_INTERVAL
+from .history import View
 from .content import Content
-from .money import Payment, Subsctiption
+from .money import Distribution, Payment, Subsctiption
 
 
 class Role(db.Document, RoleMixin):
@@ -12,11 +14,6 @@ class Role(db.Document, RoleMixin):
   
   def __unicode__(self) -> str:
     return self.name
-
-
-class Weight(db.EmbeddedDocument):
-  unit: Content = db.ReferenceField(Content, primary_key=True)
-  weight: int = db.IntField(required=True)
 
 
 class User(db.Document, UserMixin):
@@ -29,9 +26,18 @@ class User(db.Document, UserMixin):
   _view_time: float = db.FloatField(required=True, default=0)
   subscribtions: list[Subsctiption] = db.ListField(db.EmbeddedDocumentField(Subsctiption), default=[])
   subscribtion_pause_start: dt | None = db.DateTimeField(default=None)
-  view_waights: list[Weight] = db.ListField(db.EmbeddedDocumentField(Weight), default=[])
   
   def __unicode__(self) -> str: return self.username
+  
+  def views_for_distribution(self, distribution: Distribution) -> list[View]:
+    # increase distribution_interval by sum of all pauses that are in distribution_interval
+    distribution_start = distribution.time - DISTRIBUTION_INTERVAL
+    for subscribtion in self.subscribtions[::-1]:
+      if subscribtion.end < distribution_start: break
+      for pause in subscribtion.pauses[::-1]:
+        if pause[0] < distribution_start: break
+        distribution_start -= pause[1] - pause[0]
+    return View.objects(user=self, start_time__gte=distribution_start, start_time__lt=distribution.time)
   
   @property
   def last_subscribtion(self) -> Subsctiption | None:
@@ -66,16 +72,58 @@ class User(db.Document, UserMixin):
   def view_time(self, value: timedelta):
     self._view_time = value.total_seconds()
   
+  def add_view(self, content: Content, view_time: timedelta, time: dt = dt.now()):
+    last_view: View = View.objects(user=self, content=content).order_by('-start_time').first()
+    last_distribution = Distribution.prev(self, time)
+    last_distribution_time = last_distribution.time if last_distribution else dt.min
+    if last_view and last_view.start_time > last_distribution_time:
+      last_view.view_time += view_time
+      last_view.save()
+    else:
+      View(user=self, content=content, start_time=time, view_time=view_time).save()
+    
+    self.view_time -= view_time
+    self.save()
+  
   def subscribe(self, payment: Payment, duration: timedelta):
-    _sed = self.subscribtion_end_date
-    if not _sed or _sed < dt.now(): _sed = dt.now()
-    self.subscribtions.append(Subsctiption(payment=payment, start=_sed, end=_sed+duration))
-    # TODO: handle view_time
-    # TODO: handle distributions
+    sed = self.subscribtion_end_date
+    if not sed or sed < dt.now(): sed = dt.now()
+    self.subscribtions.append(Subsctiption(payment=payment, start=sed, end=sed+duration))
+    self.view_time += duration / 2
+    residual = duration % timedelta(days=1)
+    amount = Decimal(payment.amount)
+    
+    if residual:
+      amount_residual: Decimal = Decimal(payment.amount) * (residual / duration)
+      amount -= amount_residual
+      Distribution(
+        time = sed + duration + timedelta(days = 30),
+        user = self,
+        currency = payment.currency,
+        amount = amount_residual
+      ).save()
+    
+    amount_per_day = amount / duration.days
+    for day in range(1, duration.days + 1):
+      Distribution(
+        time = sed+timedelta(days = day + 30),
+        user = self,
+        currency = payment.currency,
+        amount = amount_per_day
+      ).save()
+    self.save()
   
   def pause_subscribtion(self):
     if self.subscribtion_pause_start: return
     self.subscribtion_pause_start = dt.now()
+
+    # pause all distributions
+    for distribution in Distribution.objects(user=self, time__gte=self.subscribtion_pause_start):
+      distribution: Distribution
+      distribution.pause = True
+      distribution.save()
+    
+    self.save()  
   
   def resume_subscribtion(self):
     if not self.subscribtion_pause_start: return
@@ -87,4 +135,13 @@ class User(db.Document, UserMixin):
         if subscribtion.start > self.subscribtion_pause_start:
           subscribtion.start += pause_duration
         else: subscribtion.pauses.append((self.subscribtion_pause_start, _now))
+    
+    # resume all distributions
+    for distribution in Distribution.objects(user=self, time__gte=_now):
+      distribution: Distribution
+      distribution.time += pause_duration
+      distribution.pause = False
+      distribution.save()
+    
     self.subscribtion_pause_start = None
+    self.save()

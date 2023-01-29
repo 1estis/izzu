@@ -1,13 +1,13 @@
 from __future__ import annotations
-from datetime import datetime as dt, date, timedelta
+from datetime import datetime as dt, date
 from app import db
-from .dicts import ContentType, Genre, Language
+from .dicts import ContentType, Language
 from .tools import DescriptionManager, MediafileManager, PosterManager, TitleManager
 
 class Mediafile(db.EmbeddedDocument):
   # size: int = db.IntField(required=True)
   language: Language = db.ReferenceField(Language, required=True)
-  genres: list[Genre] = db.ListField(db.ReferenceField(Genre), default=[])
+  # genres: list[Genre] = db.ListField(db.ReferenceField(Genre), default=[])
   # duration: int = db.IntField()
   # resolution: str = db.StringField(max_length=255)
 

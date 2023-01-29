@@ -1,3 +1,4 @@
+from datetime import timedelta
 import mongoengine
 from flask import Flask
 from flask_mail import Mail
@@ -7,6 +8,7 @@ from flask_security import MongoEngineUserDatastore, Security
 
 
 DLC = 'en_US'  # Default language code for the app
+DISTRIBUTION_INTERVAL = timedelta(days=30)  # Interval between content distribution
 
 # Instantiate Flask extensions
 db: mongoengine = MongoEngine()
