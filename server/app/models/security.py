@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import datetime as dt, timedelta
 from flask_security import UserMixin, RoleMixin
 from app import db
-from .content import Weight
+from .content import Content
 from .money import Payment, Subsctiption
 
 
@@ -12,6 +12,11 @@ class Role(db.Document, RoleMixin):
   
   def __unicode__(self) -> str:
     return self.name
+
+
+class Weight(db.EmbeddedDocument):
+  unit: Content = db.ReferenceField(Content, primary_key=True)
+  weight: int = db.IntField(required=True)
 
 
 class User(db.Document, UserMixin):

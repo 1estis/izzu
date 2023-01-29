@@ -5,6 +5,10 @@ from .. import DLC
 from .tools import Dictionary
 
 
+class ContentType(Dictionary): plural_title = True
+class Genre(Dictionary): pass
+
+
 class Currency(Dictionary):
   code: str = db.StringField(max_length=3, primary_key=True)
   symbol: str = db.StringField(max_length=1, required=True)
