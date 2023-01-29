@@ -97,7 +97,7 @@ class User(db.Document, UserMixin):
       amount_residual: Decimal = Decimal(payment.amount) * (residual / duration)
       amount -= amount_residual
       Distribution(
-        time = sed + duration + timedelta(days = 30),
+        time = sed + duration + timedelta(days = DISTRIBUTION_INTERVAL),
         user = self,
         currency = payment.currency,
         amount = amount_residual
@@ -106,7 +106,7 @@ class User(db.Document, UserMixin):
     amount_per_day = amount / duration.days
     for day in range(1, duration.days + 1):
       Distribution(
-        time = sed+timedelta(days = day + 30),
+        time = sed+timedelta(days = day + DISTRIBUTION_INTERVAL),
         user = self,
         currency = payment.currency,
         amount = amount_per_day
