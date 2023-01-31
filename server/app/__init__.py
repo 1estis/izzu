@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal
 import mongoengine
 from flask import Flask
 from flask_mail import Mail
@@ -7,8 +8,15 @@ from flask_mongoengine import MongoEngine
 from flask_security import MongoEngineUserDatastore, Security
 
 
-DLC = 'en_US'  # Default language code for the app
-DISTRIBUTION_INTERVAL = timedelta(days=30)  # Interval between content distribution
+DLC = 'en_US'
+'''Default language code for the app'''
+RDI = timedelta(days=1)
+'''Royalty distribution interval (max time between two distributions)'''
+RDR = timedelta(days=15)
+'''Royalty distribution range (how far back and how far forward to look for views)
+
+Royalty distribution area = RDR + interval beetwen two distributions + RDR'''
+SERVICE_FEE = Decimal('0.3')
 
 # Instantiate Flask extensions
 db: mongoengine = MongoEngine()
@@ -25,13 +33,8 @@ def create_app(extra_config_settings={}):
 
   # Instantiate Flask
   app = Flask(__name__)
-
-  # Load App Config settings
-  # Load common settings from 'app/settings.py' file
   app.config.from_object('app.settings')
-  # Load local settings from 'app/local_settings.py'
   app.config.from_object('app.local_settings')
-  # Load extra config settings from 'extra_config_settings' param
   app.config.update(extra_config_settings)
 
   # Setup db Mongo

@@ -2,7 +2,6 @@
 from __future__ import annotations
 from datetime import datetime as dt, timedelta
 from app import db
-from .money import Distribution
 from . import security as sec
 from .content import Content
 
@@ -10,11 +9,17 @@ from .content import Content
 class Weight(db.EmbeddedDocument):
   id: int = db.SequenceField(primary_key=True)
   unit: Content = db.ReferenceField(Content, required=True)
-  weight: int = db.IntField(required=True) # max 9_999_999_999
-  negative: bool = db.BooleanField(required=True, default=False)
+  weight: int = db.IntField(required=True, min_value=-999_999, max_value=999_999)
 
 
 class Weights(db.Document):
+  '''Weights of content for user
+  
+  How much user likes content relative to other content.
+  Used to calculate royalty distribution.
+  :param user: user
+  :param time: time of weights
+  :param weights: weights of content'''
   id: int = db.SequenceField(primary_key=True)
   user: sec.User = db.ReferenceField('sec.User', required=True)
   time: dt = db.DateTimeField(required=True, default=dt.now)
@@ -22,12 +27,8 @@ class Weights(db.Document):
   
   def __init__(self, *args, **values):
     super().__init__(*args, **values)
-    # if we have weights for unviewed content by user, remove it from weights list
-    dist = Distribution.next(self.user, self.time)
-    if not dist: return
-    views = self.user.views_for_distribution(dist)
-    viewed = {view.content for view in views}
-    self.weights = [weight for weight in self.weights if weight.unit in viewed]
+    # ignore weights with zero value or if user has not viewed content in distribution time
+    # TODO
 
 
 class View(db.Document):
@@ -36,6 +37,8 @@ class View(db.Document):
   content: Content = db.ReferenceField(Content, required=True)
   start_time: dt = db.DateTimeField(required=True)
   _view_time: float = db.FloatField(required=True)
+  # next_dtime: dt = db.DateTimeField(required=True)
+  # '''Next distribution time (time of next royalty distribution)'''
   
   @property
   def view_time(self) -> timedelta:

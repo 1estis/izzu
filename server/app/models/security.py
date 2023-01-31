@@ -2,10 +2,10 @@ from __future__ import annotations
 from datetime import datetime as dt, timedelta
 from decimal import Decimal
 from flask_security import UserMixin, RoleMixin
-from app import db, DISTRIBUTION_INTERVAL
+from app import db, RDR
 from .history import View
 from .content import Content
-from .money import Distribution, Payment, Subsctiption
+from .money import Payment, Subscription
 
 
 class Role(db.Document, RoleMixin):
@@ -24,45 +24,11 @@ class User(db.Document, UserMixin):
   roles: list = db.ListField(db.ReferenceField(Role), default=[])
   confirmed_at: dt | None = db.DateTimeField(default=None)
   _view_time: float = db.FloatField(required=True, default=0)
-  subscribtions: list[Subsctiption] = db.ListField(db.EmbeddedDocumentField(Subsctiption), default=[])
-  subscribtion_pause_start: dt | None = db.DateTimeField(default=None)
-  
-  def __unicode__(self) -> str: return self.username
-  
-  def views_for_distribution(self, distribution: Distribution) -> list[View]:
-    # increase distribution_interval by sum of all pauses that are in distribution_interval
-    distribution_start = distribution.time - DISTRIBUTION_INTERVAL
-    for subscribtion in self.subscribtions[::-1]:
-      if subscribtion.end < distribution_start: break
-      for pause in subscribtion.pauses[::-1]:
-        if pause[0] < distribution_start: break
-        distribution_start -= pause[1] - pause[0]
-    return View.objects(user=self, start_time__gte=distribution_start, start_time__lt=distribution.time)
-  
-  @property
-  def last_subscribtion(self) -> Subsctiption | None:
-    return self.subscribtions[-1] if self.subscribtions else None
-  
-  @property
-  def subscribed(self):
-    if self.subscribtion_pause_start: return False
-    if not self.last_subscribtion: return False
-    return self.last_subscribtion.end > dt.now()
-  
-  @property
-  def subscribtion_end_date(self):
-    return self.last_subscribtion.end if self.last_subscribtion else self.subscribtion_pause_start
-  
-  @property
-  def continuous_subscribtions(self):
-    if not self.subscribed: return []
-    result: list[Subsctiption] = []
-    _1day = timedelta(days=1)
-    for subscribtion in self.subscribtions:
-      if not result or subscribtion.start - result[-1].end < _1day:
-        result.append(subscribtion)
-      else: break
-    return result
+  subscriptions: list[Subscription] = db.ListField(db.EmbeddedDocumentField(Subscription), default=[])
+  distributed_subscriptions: list[Subscription] = db.ListField(db.EmbeddedDocumentField(Subscription), default=[])
+  subscription_paused: bool = db.BooleanField(default=False)
+  pending_subscriptions: list[Subscription] = db.ListField(db.EmbeddedDocumentField(Subscription), default=[])
+  '''Subscriptions that are waiting for pause to end'''
 
   @property
   def view_time(self) -> timedelta:
@@ -72,11 +38,67 @@ class User(db.Document, UserMixin):
   def view_time(self, value: timedelta):
     self._view_time = value.total_seconds()
   
-  def add_view(self, content: Content, view_time: timedelta, time: dt = dt.now()):
+  @property
+  def last_subscription(self) -> Subscription | None:
+    if self.subscriptions: return self.subscriptions[-1]
+    if self.distributed_subscriptions: return self.distributed_subscriptions[-1]
+  
+  @property
+  def first_subscription(self) -> Subscription | None:
+    if self.distributed_subscriptions: return self.distributed_subscriptions[0]
+    if self.subscriptions: return self.subscriptions[0]
+  
+  @property
+  def subscription_end_date(self):
+    return last_subscription.end if (last_subscription := self.last_subscription) else None
+  
+  def __unicode__(self) -> str: return self.username
+  
+  def subscribed(self, time: dt) -> bool:
+    if not (last_subscription := self.last_subscription): return False
+    return last_subscription.end > time
+  
+  def current_subscription(self, time: dt) -> Subscription | None:
+    if not self.subscribed(time): return None
+    for subscription in self.subscriptions:
+      if subscription.start <= time < subscription.end: return subscription
+  
+  def next_dtime(self, time: dt) -> dt | None:
+    '''Next distribution time for this user after given time.'''
+    
+    if not (last_subscription := self.last_subscription): return None
+    if last_subscription.final_dtime() < time: return None
+    
+    if self.distributed_subscriptions \
+      and self.distributed_subscriptions[-1].final_dtime() > time:
+      for subscription in self.distributed_subscriptions:
+        dtime = subscription.next_dtime(time)
+        if dtime: return dtime
+    
+    for subscription in self.subscriptions:
+      dtime = subscription.next_dtime(time)
+      if dtime: return dtime
+  
+  def previous_dtime(self, time: dt) -> dt | None:
+    '''Previous distribution time for this user before given time.'''
+    
+    if not (first_subscription := self.first_subscription): return None
+    if first_subscription.start > time: return None
+    
+    if self.subscriptions \
+      and self.subscriptions[0].start < time:
+      for subscription in reversed(self.subscriptions):
+        dtime = subscription.previous_dtime(time)
+        if dtime: return dtime
+        
+    for subscription in reversed(self.distributed_subscriptions):
+      dtime = subscription.previous_dtime(time)
+      if dtime: return dtime
+  
+  def add_view(self, content: Content, view_time: timedelta, time: dt):
     last_view: View = View.objects(user=self, content=content).order_by('-start_time').first()
-    last_distribution = Distribution.prev(self, time)
-    last_distribution_time = last_distribution.time if last_distribution else dt.min
-    if last_view and last_view.start_time > last_distribution_time:
+    
+    if last_view and self.next_dtime(last_view.start_time) > time:
       last_view.view_time += view_time
       last_view.save()
     else:
@@ -85,63 +107,51 @@ class User(db.Document, UserMixin):
     self.view_time -= view_time
     self.save()
   
-  def subscribe(self, payment: Payment, duration: timedelta):
-    sed = self.subscribtion_end_date
-    if not sed or sed < dt.now(): sed = dt.now()
-    self.subscribtions.append(Subsctiption(payment=payment, start=sed, end=sed+duration))
+  def subscribe(self, payment: Payment, duration: timedelta, time: dt = dt.now()):
+    '''Subscribe user for given duration of time.'''
+    if not self.subscription_paused:
+      if not (sed := self.subscription_end_date): sed = time
+      self.subscriptions.append(
+        Subscription(start=sed, end=sed + duration, payment=payment) \
+          .calculate_fragments()
+      )
+    else:
+      if self.pending_subscriptions: sed = self.pending_subscriptions[-1].end
+      else: sed = time
+      self.pending_subscriptions.append(
+        Subscription(start=sed, end=sed + duration, payment=payment) \
+          .calculate_fragments()
+      )
     self.view_time += duration / 2
-    residual = duration % timedelta(days=1)
-    amount = Decimal(payment.amount)
-    
-    if residual:
-      amount_residual: Decimal = Decimal(payment.amount) * (residual / duration)
-      amount -= amount_residual
-      Distribution(
-        time = sed + duration + timedelta(days = DISTRIBUTION_INTERVAL),
-        user = self,
-        currency = payment.currency,
-        amount = amount_residual
-      ).save()
-    
-    amount_per_day = amount / duration.days
-    for day in range(1, duration.days + 1):
-      Distribution(
-        time = sed+timedelta(days = day + DISTRIBUTION_INTERVAL),
-        user = self,
-        currency = payment.currency,
-        amount = amount_per_day
-      ).save()
-    self.save()
   
-  def pause_subscribtion(self):
-    if self.subscribtion_pause_start: return
-    self.subscribtion_pause_start = dt.now()
-
-    # pause all distributions
-    for distribution in Distribution.objects(user=self, time__gte=self.subscribtion_pause_start):
-      distribution: Distribution
-      distribution.pause = True
-      distribution.save()
+  def split_subscription_list_by_time(self, subscriptions: list[Subscription], time: dt) -> tuple[list[Subscription], list[Subscription]]:
+    '''Split subscription list into two lists by given time.'''
+    first_list = []
+    second_list = []
+    for subscription in subscriptions:
+      if subscription.end <= time:
+        first_list.append(subscription)
+      elif subscription.start >= time:
+        second_list.append(subscription)
+      else:
+        split1, split2 = subscription.split(time)
+        if split1: first_list.append(split1)
+        if split2: second_list.append(split2)
+    return first_list, second_list
     
-    self.save()  
+  def pause_subscription(self, time: dt = dt.now()):
+    '''Pause the subscription by splitting the last subscription into two and adding the second part to pending subscriptions.'''
+    if self.subscription_paused: return
+    if not self.subscribed(time): return
+    self.subscriptions, self.pending_subscriptions = self.split_subscription_list_by_time(self.subscriptions, time)
+    self.subscription_paused = True
   
-  def resume_subscribtion(self):
-    if not self.subscribtion_pause_start: return
-    _now = dt.now()
-    pause_duration = _now - self.subscribtion_pause_start
-    for subscribtion in self.subscribtions:
-      if subscribtion.end > self.subscribtion_pause_start:
-        subscribtion.end += pause_duration
-        if subscribtion.start > self.subscribtion_pause_start:
-          subscribtion.start += pause_duration
-        else: subscribtion.pauses.append((self.subscribtion_pause_start, _now))
-    
-    # resume all distributions
-    for distribution in Distribution.objects(user=self, time__gte=_now):
-      distribution: Distribution
-      distribution.time += pause_duration
-      distribution.pause = False
-      distribution.save()
-    
-    self.subscribtion_pause_start = None
-    self.save()
+  def resume_subscription(self, time: dt = dt.now()):
+    '''Resume the subscription by moving the pending subscriptions to the main subscription list.'''
+    if not self.subscription_paused: return
+    if not (sed := self.subscription_end_date) or sed < time: sed = time
+    for subscription in self.pending_subscriptions:
+      subscription.move_to(sed)
+    self.subscriptions += self.pending_subscriptions
+    self.pending_subscriptions = []
+    self.subscription_paused = False
