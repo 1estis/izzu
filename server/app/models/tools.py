@@ -1,11 +1,46 @@
 from __future__ import annotations
 import re
-from typing import Self
+from datetime import datetime as dt
+from time import sleep
+from typing import Self, Type
 from xml.dom import ValidationErr
 
-from . import dicts
-from . import _types
+from . import dicts, _types
 from app import db, DLC
+
+
+class Task(db.Document):
+  meta = {'allow_inheritance': True, 'indexes': ['time']}
+  id: int = db.SequenceField(primary_key=True)
+  time: dt = db.DateTimeField(required=True)
+  
+  def __unicode__(self) -> str:
+    return f'{self.__class__.__name__} {self.time}'
+  
+  def do(self) -> bool:
+    '''Do task. You must override this method.'''
+    raise NotImplementedError
+  
+  @classmethod
+  def next(cls) -> Type[Task] | None:
+    '''Get next task in instance of subclass of Task.'''
+    return cls.objects.order_by('time').first()
+
+  @classmethod
+  def run_handler(cls):
+    while True:
+      if task := cls.next():
+        if (time := task.time) <= dt.now():
+          if task.do(): task.delete()
+        else:
+          sleep(min(1, (time - dt.now()).total_seconds()))
+      else:
+        sleep(1)
+  
+  @classmethod
+  def run_handler_async(cls):
+    from threading import Thread
+    Thread(target=cls.run_handler, daemon=True).start()
 
 
 class TitleManager:

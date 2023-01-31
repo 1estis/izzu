@@ -3,6 +3,8 @@ from datetime import datetime as dt, timedelta
 from decimal import Decimal
 
 from app import db, RDI, RDR, SERVICE_FEE
+from . import security as sec
+from .tools import Task
 from .dicts import Currency
 
 
@@ -22,9 +24,11 @@ class SubscriptionFragment(db.EmbeddedDocument):
   end: dt = db.DateTimeField(required=True)
   distributed: bool = db.BooleanField(required=True, default=False)
   
+  @property
   def distribution_area(self):
     return self.start - RDR, self.end + RDR
   
+  @property
   def dtime(self):
     '''Distribution time, time when amount will be distributed'''
     return self.end + RDR
@@ -97,7 +101,7 @@ class Subscription(db.EmbeddedDocument):
     if self.final_dtime() < time: return None
     
     for fragment in self.fragments:
-      if (dtime := fragment.dtime()) > time:
+      if (dtime := fragment.dtime) > time:
         return dtime
   
   def previous_dtime(self, time: dt = dt.now()) -> dt | None:
@@ -106,11 +110,11 @@ class Subscription(db.EmbeddedDocument):
     if self.start > time: return None
     
     for fragment in reversed(self.fragments):
-      if (dtime := fragment.dtime()) < time:
+      if (dtime := fragment.dtime) < time:
         return dtime
   
   def final_dtime(self) -> dt:
-    return self.fragments[-1].dtime()
+    return self.fragments[-1].dtime
   
   def next_undistributed_fragment(self) -> SubscriptionFragment | None:
     for fragment in self.fragments:
@@ -127,3 +131,10 @@ class Subscription(db.EmbeddedDocument):
     for fragment in self.fragments:
       fragment.start += timedelta
       fragment.end += timedelta
+
+
+class Distribution(Task):
+  user: sec.User = db.ReferenceField('sec.User', required=True)
+  
+  def do(self) -> bool:
+    return not not self.user.distribute()

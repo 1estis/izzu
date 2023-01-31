@@ -1,11 +1,10 @@
 from __future__ import annotations
 from datetime import datetime as dt, timedelta
-from decimal import Decimal
 from flask_security import UserMixin, RoleMixin
-from app import db, RDR
+from app import db
 from .history import View
 from .content import Content
-from .money import Payment, Subscription
+from .money import Payment, Subscription, Distribution, SubscriptionFragment
 
 
 class Role(db.Document, RoleMixin):
@@ -52,6 +51,12 @@ class User(db.Document, UserMixin):
   def subscription_end_date(self):
     return last_subscription.end if (last_subscription := self.last_subscription) else None
   
+  @property
+  def next_undistributed_fragment(self) -> SubscriptionFragment | None:
+    '''Next fragment of subscription that has not been distributed yet.'''
+    if self.subscriptions: return None
+    return self.subscriptions[0].next_undistributed_fragment()
+  
   def __unicode__(self) -> str: return self.username
   
   def subscribed(self, time: dt) -> bool:
@@ -63,7 +68,7 @@ class User(db.Document, UserMixin):
     for subscription in self.subscriptions:
       if subscription.start <= time < subscription.end: return subscription
   
-  def next_dtime(self, time: dt) -> dt | None:
+  def next_dtime(self, time: dt | None) -> dt | None:
     '''Next distribution time for this user after given time.'''
     
     if not (last_subscription := self.last_subscription): return None
@@ -123,6 +128,20 @@ class User(db.Document, UserMixin):
           .calculate_fragments()
       )
     self.view_time += duration / 2
+    
+    # create new distribution task for this user if there is no task for this user
+    if not Distribution.objects(user=self) and self.subscriptions:
+      Distribution(user=self, time=self.next_undistributed_fragment.dtime).save()
+  
+  def distribute(self):
+    '''Distribute the next fragment of subscription to this user.'''
+    if not self.subscriptions: raise Exception('No subscription to distribute')
+    self.subscriptions[0].distribute() # TODO: write distribute method
+    if not (nuf := self.subscriptions[0].next_undistributed_fragment()):
+      self.distributed_subscriptions.append(self.subscriptions.pop(0))
+      nuf = self.next_undistributed_fragment
+    if nuf:
+      Distribution(user=self, time=nuf.dtime).save()
   
   def split_subscription_list_by_time(self, subscriptions: list[Subscription], time: dt) -> tuple[list[Subscription], list[Subscription]]:
     '''Split subscription list into two lists by given time.'''
