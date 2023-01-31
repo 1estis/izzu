@@ -137,4 +137,9 @@ class Distribution(Task):
   user: sec.User = db.ReferenceField('sec.User', required=True)
   
   def do(self) -> bool:
-    return not not self.user.distribute()
+    err = self.user.distribute()
+    if err:
+      self.error = err
+      self.save()
+      return False
+    return True

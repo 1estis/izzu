@@ -133,9 +133,9 @@ class User(db.Document, UserMixin):
     if not Distribution.objects(user=self) and self.subscriptions:
       Distribution(user=self, time=self.next_undistributed_fragment.dtime).save()
   
-  def distribute(self):
+  def distribute(self) -> str | None:
     '''Distribute the next fragment of subscription to this user.'''
-    if not self.subscriptions: raise Exception('No subscription to distribute')
+    if not self.subscriptions: return 'No subscriptions to distribute.'
     self.subscriptions[0].distribute() # TODO: write distribute method
     if not (nuf := self.subscriptions[0].next_undistributed_fragment()):
       self.distributed_subscriptions.append(self.subscriptions.pop(0))

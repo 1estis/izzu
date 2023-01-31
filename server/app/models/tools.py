@@ -10,9 +10,10 @@ from app import db, DLC
 
 
 class Task(db.Document):
-  meta = {'allow_inheritance': True, 'indexes': ['time']}
+  meta = {'allow_inheritance': True, 'indexes': ['time', 'error']}
   id: int = db.SequenceField(primary_key=True)
   time: dt = db.DateTimeField(required=True)
+  error: str = db.StringField(default='')
   
   def __unicode__(self) -> str:
     return f'{self.__class__.__name__} {self.time}'
@@ -24,7 +25,7 @@ class Task(db.Document):
   @classmethod
   def next(cls) -> Type[Task] | None:
     '''Get next task in instance of subclass of Task.'''
-    return cls.objects.order_by('time').first()
+    return cls.objects(error='').order_by('time').first()
 
   @classmethod
   def run_handler(cls):
