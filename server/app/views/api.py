@@ -2,13 +2,8 @@ from __future__ import annotations
 from flask import redirect, url_for
 from flask_login import current_user
 from flask_security.utils import hash_password
-from threading import Thread
 
-from datetime import datetime as dt, timedelta
-
-from ..models.money import Distribution
-
-from ..models.tools import Task
+from datetime import datetime as dt
 
 from .. import user_datastore
 from . import bl
@@ -22,9 +17,6 @@ current_user: User
 
 @bl.before_app_first_request
 def init():
-  
-  Task.run_handler_async()
-  
   if not user_datastore.get_user('admin@self.com'):
     user_datastore.create_role(name="admin")
     user_datastore.create_user(

@@ -4,7 +4,7 @@ from flask_security import UserMixin, RoleMixin
 from app import db
 from .history import View
 from .content import Content
-from .money import Payment, Subscription, Distribution, SubscriptionFragment
+from .money import Payment, Subscription, Allocate, SubscriptionFragment
 
 
 class Role(db.Document, RoleMixin):
@@ -24,7 +24,7 @@ class User(db.Document, UserMixin):
   confirmed_at: dt | None = db.DateTimeField(default=None)
   _view_time: float = db.FloatField(required=True, default=0)
   subscriptions: list[Subscription] = db.ListField(db.EmbeddedDocumentField(Subscription), default=[])
-  distributed_subscriptions: list[Subscription] = db.ListField(db.EmbeddedDocumentField(Subscription), default=[])
+  allocated_subscriptions: list[Subscription] = db.ListField(db.EmbeddedDocumentField(Subscription), default=[])
   subscription_paused: bool = db.BooleanField(default=False)
   pending_subscriptions: list[Subscription] = db.ListField(db.EmbeddedDocumentField(Subscription), default=[])
   '''Subscriptions that are waiting for pause to end'''
@@ -40,11 +40,11 @@ class User(db.Document, UserMixin):
   @property
   def last_subscription(self) -> Subscription | None:
     if self.subscriptions: return self.subscriptions[-1]
-    if self.distributed_subscriptions: return self.distributed_subscriptions[-1]
+    if self.allocated_subscriptions: return self.allocated_subscriptions[-1]
   
   @property
   def first_subscription(self) -> Subscription | None:
-    if self.distributed_subscriptions: return self.distributed_subscriptions[0]
+    if self.allocated_subscriptions: return self.allocated_subscriptions[0]
     if self.subscriptions: return self.subscriptions[0]
   
   @property
@@ -52,10 +52,10 @@ class User(db.Document, UserMixin):
     return last_subscription.end if (last_subscription := self.last_subscription) else None
   
   @property
-  def next_undistributed_fragment(self) -> SubscriptionFragment | None:
-    '''Next fragment of subscription that has not been distributed yet.'''
+  def next_unallocated_fragment(self) -> SubscriptionFragment | None:
+    '''Next fragment of subscription that has not been allocated yet.'''
     if self.subscriptions: return None
-    return self.subscriptions[0].next_undistributed_fragment()
+    return self.subscriptions[0].next_unallocated_fragment()
   
   def __unicode__(self) -> str: return self.username
   
@@ -68,24 +68,24 @@ class User(db.Document, UserMixin):
     for subscription in self.subscriptions:
       if subscription.start <= time < subscription.end: return subscription
   
-  def next_dtime(self, time: dt | None) -> dt | None:
-    '''Next distribution time for this user after given time.'''
+  def next_atime(self, time: dt) -> dt | None:
+    '''Next allocation time for this user after given time.'''
     
     if not (last_subscription := self.last_subscription): return None
-    if last_subscription.final_dtime() < time: return None
+    if last_subscription.final_atime() < time: return None
     
-    if self.distributed_subscriptions \
-      and self.distributed_subscriptions[-1].final_dtime() > time:
-      for subscription in self.distributed_subscriptions:
-        dtime = subscription.next_dtime(time)
-        if dtime: return dtime
+    if self.allocated_subscriptions \
+      and self.allocated_subscriptions[-1].final_atime() > time:
+      for subscription in self.allocated_subscriptions:
+        atime = subscription.next_atime(time)
+        if atime: return atime
     
     for subscription in self.subscriptions:
-      dtime = subscription.next_dtime(time)
-      if dtime: return dtime
+      atime = subscription.next_atime(time)
+      if atime: return atime
   
-  def previous_dtime(self, time: dt) -> dt | None:
-    '''Previous distribution time for this user before given time.'''
+  def previous_atime(self, time: dt) -> dt | None:
+    '''Previous allocation time for this user before given time.'''
     
     if not (first_subscription := self.first_subscription): return None
     if first_subscription.start > time: return None
@@ -93,18 +93,18 @@ class User(db.Document, UserMixin):
     if self.subscriptions \
       and self.subscriptions[0].start < time:
       for subscription in reversed(self.subscriptions):
-        dtime = subscription.previous_dtime(time)
-        if dtime: return dtime
+        atime = subscription.previous_atime(time)
+        if atime: return atime
         
-    for subscription in reversed(self.distributed_subscriptions):
-      dtime = subscription.previous_dtime(time)
-      if dtime: return dtime
+    for subscription in reversed(self.allocated_subscriptions):
+      atime = subscription.previous_atime(time)
+      if atime: return atime
   
   def add_view(self, content: Content, view_time: timedelta, time: dt):
-    last_view: View = View.objects(user=self, content=content).order_by('-start_time').first()
+    last_view: View | None = View.objects(user=self, content=content).order_by('-start_time').first()
     
-    if last_view and self.next_dtime(last_view.start_time) > time:
-      last_view.view_time += view_time
+    if last_view and self.next_atime(last_view.start_time) > time:
+      last_view.duration += view_time
       last_view.save()
     else:
       View(user=self, content=content, start_time=time, view_time=view_time).save()
@@ -129,21 +129,23 @@ class User(db.Document, UserMixin):
       )
     self.view_time += duration / 2
     
-    # create new distribution task for this user if there is no task for this user
-    if not Distribution.objects(user=self) and self.subscriptions:
-      Distribution(user=self, time=self.next_undistributed_fragment.dtime).save()
+    # create new allocation task for this user if there is no task for this user
+    if not Allocate.objects(user=self) and self.subscriptions:
+      Allocate(user=self, time=self.next_unallocated_fragment.atime).save()
   
-  def distribute(self) -> str | None:
-    '''Distribute the next fragment of subscription to this user.'''
-    if not self.subscriptions: return 'No subscriptions to distribute.'
-    self.subscriptions[0].distribute() # TODO: write distribute method
-    if not (nuf := self.subscriptions[0].next_undistributed_fragment()):
-      self.distributed_subscriptions.append(self.subscriptions.pop(0))
-      nuf = self.next_undistributed_fragment
+  def allocate_next_fragment(self) -> None:
+    '''Allocate the next fragment of subscription to this user.'''
+    if not self.subscriptions: raise Exception('No subscriptions to allocate')
+    self.subscriptions[0].allocate_next_fragment()
+    if not (nuf := self.subscriptions[0].next_unallocated_fragment()):
+      self.allocated_subscriptions.append(self.subscriptions.pop(0))
+      nuf = self.next_unallocated_fragment
     if nuf:
-      Distribution(user=self, time=nuf.dtime).save()
+      Allocate(user=self, time=nuf.atime).save()
+    
+    self.save()
   
-  def split_subscription_list_by_time(self, subscriptions: list[Subscription], time: dt) -> tuple[list[Subscription], list[Subscription]]:
+  def _split_subscription_list_by_time(self, subscriptions: list[Subscription], time: dt) -> tuple[list[Subscription], list[Subscription]]:
     '''Split subscription list into two lists by given time.'''
     first_list = []
     second_list = []
@@ -162,7 +164,7 @@ class User(db.Document, UserMixin):
     '''Pause the subscription by splitting the last subscription into two and adding the second part to pending subscriptions.'''
     if self.subscription_paused: return
     if not self.subscribed(time): return
-    self.subscriptions, self.pending_subscriptions = self.split_subscription_list_by_time(self.subscriptions, time)
+    self.subscriptions, self.pending_subscriptions = self._split_subscription_list_by_time(self.subscriptions, time)
     self.subscription_paused = True
   
   def resume_subscription(self, time: dt = dt.now()):

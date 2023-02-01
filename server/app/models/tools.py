@@ -31,12 +31,17 @@ class Task(db.Document):
   def run_handler(cls):
     while True:
       if task := cls.next():
+        
         if (time := task.time) <= dt.now():
-          if task.do(): task.delete()
-        else:
-          sleep(min(1, (time - dt.now()).total_seconds()))
-      else:
-        sleep(1)
+          
+          try: task.do()
+          except Exception as e:
+            task.error = str(e)
+            task.save()
+        
+        else: sleep(min(1, (time - dt.now()).total_seconds()))
+      
+      else: sleep(1)
   
   @classmethod
   def run_handler_async(cls):

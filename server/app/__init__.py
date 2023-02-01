@@ -10,12 +10,12 @@ from flask_security import MongoEngineUserDatastore, Security
 
 DLC = 'en_US'
 '''Default language code for the app'''
-RDI = timedelta(days=1)
-'''Royalty distribution interval (max time between two distributions)'''
-RDR = timedelta(days=15)
-'''Royalty distribution range (how far back and how far forward to look for views)
+RAI = timedelta(days=1)
+'''Royalty allocation interval (max time between two allocations)'''
+RAR = timedelta(days=15)
+'''Royalty allocation range (how far back and how far forward to look for views)
 
-Royalty distribution area = RDR + interval beetwen two distributions + RDR'''
+Royalty allocation area = RDR + interval beetwen two allocations + RDR'''
 SERVICE_FEE = Decimal('0.3')
 
 # Instantiate Flask extensions
@@ -40,6 +40,14 @@ def create_app(extra_config_settings={}):
   # Setup db Mongo
   db.init_app(app)
 
+  # Setup Flask-secure
+  app.user_datastore: MongoEngineUserDatastore = user_datastore
+  security.init_app(app, app.user_datastore)
+  
+  # Run async tasks
+  from .models.tools import Task
+  Task.run_handler_async()
+
   # Setup Flask-Mail
   mail.init_app(app)
 
@@ -49,10 +57,6 @@ def create_app(extra_config_settings={}):
 
   # Setup an error-logger to send emails to app.config.ADMINS
   init_email_error_handler(app)
-
-  # Setup Flask-secure
-  app.user_datastore: MongoEngineUserDatastore = user_datastore
-  security.init_app(app, app.user_datastore)
 
   app.config["TEMPLATES_AUTO_RELOAD"] = app.debug
 
