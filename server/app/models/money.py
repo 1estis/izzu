@@ -1,9 +1,9 @@
 from __future__ import annotations
 from datetime import datetime as dt, timedelta
-from decimal import Decimal
+from fractions import Fraction
 
 from app import db, RAI, RAR, SERVICE_FEE
-from .history import Royalty, View, Weights
+from .history import Allocation, Royalty, View, Weights
 from . import security as sec
 from .tools import Task
 from .dicts import Currency
@@ -11,19 +11,37 @@ from .dicts import Currency
 
 class Payment(db.EmbeddedDocument):
   currency: Currency = db.ReferenceField(Currency, required=True)
-  amount: Decimal = db.DecimalField(required=True)
+  numerator: int = db.IntField(required=True)
+  denominator: int = db.IntField(required=True)
   time: dt = db.DateTimeField(required=True)
   cheque: bytes = db.BinaryField(required=True, default=b'')
   cheque_url: str = db.StringField(required=True, default='')
+  
+  @property
+  def amount(self) -> Fraction:
+    return Fraction(self.numerator, self.denominator)
+  
+  @amount.setter
+  def amount(self, value: Fraction):
+    self.numerator, self.denominator = value.numerator, value.denominator
 
 
 class SubscriptionFragment(db.EmbeddedDocument):
   meta = {'indexes': ['time', 'executed']}
   id: int = db.SequenceField(primary_key=True)
-  amount: Decimal = db.DecimalField(required=True)
+  numinator: int = db.IntField(required=True)
+  denominator: int = db.IntField(required=True)
   start: dt = db.DateTimeField(required=True)
   end: dt = db.DateTimeField(required=True)
   allocated: bool = db.BooleanField(required=True, default=False)
+  
+  @property
+  def amount(self) -> Fraction:
+    return Fraction(self.numerator, self.denominator)
+  
+  @amount.setter
+  def amount(self, value: Fraction):
+    self.numerator, self.denominator = value.numerator, value.denominator
   
   def allocate(self) -> None:
     '''Allocate fragment of subscription'''
@@ -41,7 +59,7 @@ class SubscriptionFragment(db.EmbeddedDocument):
       self.save()
       return
     
-    weights: Weights = Weights.objects(user=self._instance.user, time__lte=end).order_by('-time').first()
+    weights: Weights = Weights.objects(user=self._instance, time__lte=end).order_by('-time').first()
     
     # Unite views with same content (we need sum their view times)
     royaltys: dict[str, Royalty] = {}
@@ -54,8 +72,43 @@ class SubscriptionFragment(db.EmbeddedDocument):
       else:
         royaltys[view.content.code].view_time += view.duration
     
+    total_view_time = sum(royalty._view_time for royalty in royaltys.values())
+    
+    royaltys_weights: list[tuple[Royalty, Fraction]] = []
+    weights_sum = Fraction(1)
+    
     # Calculate royalties
-    # TODO
+    for royalty in royaltys.values():
+      weight = Fraction(1)
+      for w in weights.weights:
+        if w.unit == royalty.content:
+          weight = w.weight
+          break
+      royaltys_weights.append((royalty, weight))
+      weights_sum += weight
+    
+    royaltys_combined_coefficients = [
+      (royalty, Fraction(Fraction(royalty._view_time), Fraction(total_view_time)) * weight / weights_sum)
+      for royalty, weight in royaltys_weights
+    ]
+    total_combined_coefficient = sum(combined_coefficient for _, combined_coefficient in royaltys_combined_coefficients)
+    
+    for royalty, combined_coefficient in royaltys_combined_coefficients:
+      royalty.amount = self.amount * combined_coefficient / total_combined_coefficient
+        
+    if (_sum := sum(royalty.amount for royalty in royaltys.values())) != self.amount:
+      raise Exception('Sum of royalties is not equal to amount of subscription fragment'
+        f'Sum: {_sum}, amount: {self.amount}'
+      )
+    
+    Allocation(
+      user=self._instance,
+      time=_now,
+      amount=self.amount,
+      royalties=royaltys.values(),
+      allocation_area_start=start,
+      allocation_area_end=end
+    ).save()
     
     self.allocated = True
   
@@ -87,7 +140,8 @@ class Subscription(db.EmbeddedDocument):
     self.fragments = []
     
     if residial := (duration := self.end - self.start) % RAI:
-      amount_residial = amount * (Decimal(residial.total_seconds()) / Decimal(RAI.total_seconds()))
+      # amount_residial = amount * Fraction(residial, RAI)
+      amount_residial = amount * Fraction(Fraction(residial.total_seconds()), Fraction(RAI.total_seconds()))
       amount -= amount_residial
     
     for i in range(duration // RAI):
@@ -99,7 +153,7 @@ class Subscription(db.EmbeddedDocument):
     
     if residial:
       self.fragments.append(SubscriptionFragment(
-        amount=amount_residial,
+        amount=amount_residial, # type: ignore
         start=self.end - residial,
         end=self.end,
       ))

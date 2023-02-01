@@ -1,5 +1,5 @@
 from datetime import timedelta
-from decimal import Decimal
+from fractions import Fraction
 import mongoengine
 from flask import Flask
 from flask_mail import Mail
@@ -16,7 +16,7 @@ RAR = timedelta(days=15)
 '''Royalty allocation range (how far back and how far forward to look for views)
 
 Royalty allocation area = RDR + interval beetwen two allocations + RDR'''
-SERVICE_FEE = Decimal('0.3')
+SERVICE_FEE = Fraction(3, 10)
 
 # Instantiate Flask extensions
 db: mongoengine = MongoEngine()

@@ -1,6 +1,5 @@
 from __future__ import annotations
 from flask import redirect, url_for
-from flask_login import current_user
 from flask_security.utils import hash_password
 
 from datetime import datetime as dt
@@ -8,11 +7,8 @@ from datetime import datetime as dt
 from .. import user_datastore
 from . import bl
 
-from ..models.security import User
 from ..models.content import ContentType
 from ..models.dicts import Language
-
-current_user: User
 
 
 @bl.before_app_first_request
@@ -57,7 +53,6 @@ def init():
       .set_title(Language.default, 'Anime', False)\
       .set_title(Language.default, 'Anime', False, True)\
       .save()
-  pass
 
 
 @bl.route('/')

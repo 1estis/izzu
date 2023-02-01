@@ -1,9 +1,9 @@
 from __future__ import annotations
-import re
 from datetime import datetime as dt
-from time import sleep
 from typing import Self, Type
-from xml.dom import ValidationErr
+from mongoengine import ValidationError
+from time import sleep
+from re import match
 
 from . import dicts, _types
 from app import db, DLC
@@ -67,7 +67,7 @@ class TitleManager:
   
   def set_title(self, language: dicts.Language | None, title: str, save: bool = True, plural: bool = False) -> Self:
     if title == '': return self.remove_title(language, save, plural) if language else self
-    if language.code == DLC or language is None:
+    if language is None or language.code == DLC:
       if plural: self._plural = title
       else: self._title = title
       return self.save() if save else self
@@ -80,7 +80,7 @@ class TitleManager:
     return self.save() if save else self
   
   def remove_title(self, language: dicts.Language, save: bool = True, plural: bool = False) -> Self:
-    if plural and (language.code == DLC or language is None):
+    if plural and (language is None or language.code == DLC):
       self._plural = ''
       return self.save() if save else self
     for t in self._plurals if plural else self._titles:
@@ -181,10 +181,10 @@ class Dictionary(db.Document, TitleManager, DescriptionManager):
     codes = f'(?!{"|".join(codes)})' if codes else ''
     return f'{codes}{self._code_pattern}'
   
-  def save(self, *args, **kwargs):
-    if not re.match(self.self_code_pattern, self.code):
-      raise ValidationErr(f'Code "{self.code}" is not valid')
-    return super().save(*args, **kwargs)
+  def validate(self, clean: bool = True) -> None:
+    if not match(self.self_code_pattern, self.code):
+      raise ValidationError(f'Invalid code: {self.code}')
+    super().validate(clean)
   
   def __unicode__(self) -> str: return self.title()
   def __str__(self) -> str: return self.title()
