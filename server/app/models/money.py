@@ -51,14 +51,14 @@ class SubscriptionFragment(db.EmbeddedDocument):
     if _now < self.atime: raise Exception(f'Fragment can be allocated only after {self.atime}')
     
     start, end = self.allocation_area
-    views: list[View] = View.objects(user=self._instance, start_time__gte=start, start_time__lt=end)
+    views: list[View] = View.objects(user=self._instance._instance, start_time__gte=start, start_time__lt=end)
     
     if not views:
       # TODO: what if user has no views in distribution time?
       self.allocated = True
       return
     
-    weights: Weights = Weights.objects(user=self._instance, time__lte=end).order_by('-time').first()
+    weights: Weights = Weights.objects(user=self._instance._instance, time__lte=end).order_by('-time').first()
     
     # Unite views with same content (we need sum their view times)
     royaltys: dict[str, Royalty] = {}
@@ -95,17 +95,18 @@ class SubscriptionFragment(db.EmbeddedDocument):
     for royalty, combined_coefficient in royaltys_combined_coefficients:
       royalty.amount = self.amount * combined_coefficient / total_combined_coefficient
       
-      royalty.content.royalty_amount += royalty.amount
-      
-        
+      royalty.content.add_royalty_amount(self._instance.payment.currency, royalty.amount)
+    
+    
     if (_sum := sum(royalty.amount for royalty in royaltys.values())) != self.amount:
       raise Exception('Sum of royalties is not equal to amount of subscription fragment'
         f'Sum: {_sum}, amount: {self.amount}'
       )
     
     Allocation(
-      user=self._instance,
+      user=self._instance._instance,
       time=_now,
+      currency=self._instance.payment.currency,
       amount=self.amount,
       royalties=royaltys.values(),
       allocation_area_start=start,

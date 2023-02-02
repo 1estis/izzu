@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime as dt, timedelta
 from fractions import Fraction
 from app import db
+from .dicts import Currency
 from . import security as sec
 from .content import Content
 
@@ -16,6 +17,13 @@ class Weight(db.EmbeddedDocument):
   @property
   def weight(self) -> Fraction:
     return Fraction(self.numinator, self.denominator)
+  
+  def validate(self, clean=True):
+    if self.numinator < 1: self.numinator = 1
+    elif self.numinator > 999_999: self.numinator = 999_999
+    if self.denominator < 1: self.denominator = 1
+    elif self.denominator > 999_999: self.denominator = 999_999
+    return super().validate(clean)
 
 
 class Weights(db.Document):
@@ -88,6 +96,7 @@ class Allocation(db.Document):
   '''Time, when allocation was executed'''
   amount_numinator: int = db.IntField(required=True)
   amount_denominator: int = db.IntField(required=True)
+  currency: Currency = db.ReferenceField(Currency, required=True)
   allocation_area_start: dt = db.DateTimeField(required=True)
   allocation_area_end: dt = db.DateTimeField(required=True)
   royaltys: list[Royalty] = db.ListField(db.EmbeddedDocumentField(Royalty))

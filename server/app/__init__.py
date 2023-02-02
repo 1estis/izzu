@@ -15,7 +15,7 @@ RAI = timedelta(days=1)
 RAR = timedelta(days=15)
 '''Royalty allocation range (how far back and how far forward to look for views)
 
-Royalty allocation area = RDR + interval beetwen two allocations + RDR'''
+Royalty allocation area = RAR + subscription duration + RAR'''
 SERVICE_FEE = Fraction(3, 10)
 
 # Instantiate Flask extensions
