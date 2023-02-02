@@ -11,16 +11,16 @@ from .content import Content
 class Weight(db.EmbeddedDocument):
   id: int = db.SequenceField(primary_key=True)
   unit: Content = db.ReferenceField(Content, required=True)
-  numinator: int = db.IntField(required=True, min_value=1, max_value=999_999)
+  numerator: int = db.IntField(required=True, min_value=1, max_value=999_999)
   denominator: int = db.IntField(required=True, min_value=1, max_value=999_999)
   
   @property
   def weight(self) -> Fraction:
-    return Fraction(self.numinator, self.denominator)
+    return Fraction(self.numerator, self.denominator)
   
   def validate(self, clean=True):
-    if self.numinator < 1: self.numinator = 1
-    elif self.numinator > 999_999: self.numinator = 999_999
+    if self.numerator < 1: self.numerator = 1
+    elif self.numerator > 999_999: self.numerator = 999_999
     if self.denominator < 1: self.denominator = 1
     elif self.denominator > 999_999: self.denominator = 999_999
     return super().validate(clean)
@@ -68,17 +68,17 @@ class View(db.Document):
 class Royalty(db.EmbeddedDocument):
   id: int = db.SequenceField(primary_key=True)
   content: Content = db.ReferenceField(Content, required=True)
-  amount_numinator: int = db.IntField(required=True)
+  amount_numerator: int = db.IntField(required=True)
   amount_denominator: int = db.IntField(required=True)
   _view_time: float = db.FloatField(required=True)
   
   @property
   def amount(self) -> Fraction:
-    return Fraction(self.amount_numinator, self.amount_denominator)
+    return Fraction(self.amount_numerator, self.amount_denominator)
   
   @amount.setter
   def amount(self, value: Fraction):
-    self.amount_numinator, self.amount_denominator = value.numerator, value.denominator
+    self.amount_numerator, self.amount_denominator = value.numerator, value.denominator
   
   @property
   def view_time(self) -> timedelta:
@@ -94,7 +94,7 @@ class Allocation(db.Document):
   user: sec.User = db.ReferenceField('sec.User', required=True)
   time: dt = db.DateTimeField(required=True)
   '''Time, when allocation was executed'''
-  amount_numinator: int = db.IntField(required=True)
+  amount_numerator: int = db.IntField(required=True)
   amount_denominator: int = db.IntField(required=True)
   currency: Currency = db.ReferenceField(Currency, required=True)
   allocation_area_start: dt = db.DateTimeField(required=True)
@@ -103,8 +103,8 @@ class Allocation(db.Document):
   
   @property
   def amount(self) -> Fraction:
-    return Fraction(self.amount_numinator, self.denominator)
+    return Fraction(self.amount_numerator, self.denominator)
   
   @amount.setter
   def amount(self, value: Fraction):
-    self.amount_numinator, self.denominator = value.numerator, value.denominator
+    self.amount_numerator, self.denominator = value.numerator, value.denominator

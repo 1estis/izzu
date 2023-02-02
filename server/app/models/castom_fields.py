@@ -11,7 +11,7 @@ class FractionField(db.fields.BaseField):
     if isinstance(value, Fraction):
       return value
     elif isinstance(value, dict):
-      return Fraction(value['numinator'], value['denominator'])
+      return Fraction(value['numerator'], value['denominator'])
     elif isinstance(value, str):
       return Fraction(value)
     else:
@@ -19,11 +19,11 @@ class FractionField(db.fields.BaseField):
   
   def to_mongo(self, value):
     if isinstance(value, Fraction):
-      return {'numinator': value.numerator, 'denominator': value.denominator}
+      return {'numerator': value.numerator, 'denominator': value.denominator}
     elif isinstance(value, dict):
       return value
     elif isinstance(value, str):
-      return {'numinator': Fraction(value).numerator, 'denominator': Fraction(value).denominator}
+      return {'numerator': Fraction(value).numerator, 'denominator': Fraction(value).denominator}
     else:
       raise ValueError(f'Cannot convert {value} to Fraction')
   
@@ -35,7 +35,7 @@ class FractionField(db.fields.BaseField):
     if isinstance(value, Fraction):
       return value
     elif isinstance(value, dict):
-      return Fraction(value['numinator'], value['denominator'])
+      return Fraction(value['numerator'], value['denominator'])
     elif isinstance(value, str):
       return Fraction(value)
     else:

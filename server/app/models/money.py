@@ -29,7 +29,7 @@ class Payment(db.EmbeddedDocument):
 class SubscriptionFragment(db.EmbeddedDocument):
   meta = {'indexes': ['time', 'executed']}
   id: int = db.SequenceField(primary_key=True)
-  numinator: int = db.IntField(required=True)
+  numerator: int = db.IntField(required=True)
   denominator: int = db.IntField(required=True)
   start: dt = db.DateTimeField(required=True)
   end: dt = db.DateTimeField(required=True)
