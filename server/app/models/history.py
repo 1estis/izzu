@@ -23,13 +23,13 @@ class Weight(db.EmbeddedDocument):
 
 
 class Weights(db.Document):
-  '''Scales of content for user
+  '''Weights of content for user
   
   How much user likes content relative to other content.
   Used to calculate royalty allocation.
   :param user: user
   :param time: time of weights
-  :param weights: weight of content'''
+  :param weights: weights of content'''
   id: int = db.SequenceField(primary_key=True)
   user: sec.User = db.ReferenceField('sec.User', required=True)
   time: dt = db.DateTimeField(required=True, default=dt.now)
@@ -37,6 +37,11 @@ class Weights(db.Document):
   
   def save(self, *args, **values):
     # ignore weights with zero value or if user has not viewed content in allocation time
+    if fragment := self.user.fragment(self.time):
+      start, end = fragment.allocation_area
+      if views := View.objects(user=self.user, start_time__gte=start, start_time__lt=end):
+        views: list[Content] = [v.content for v in views]
+        self.weights = [w for w in self.weights if w.unit in views]
     super().save(*args, **values)
 
 

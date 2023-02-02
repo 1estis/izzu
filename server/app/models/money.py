@@ -159,6 +159,13 @@ class Subscription(db.EmbeddedDocument):
       ))
     
     return self
+  
+  def fragment(self, time: dt) -> SubscriptionFragment | None:
+    '''Return fragment of subscription at time. Return None if time is out of subscription range.'''
+    for fragment in self.fragments:
+      if fragment.start <= time < fragment.end:
+        return fragment
+    return None
 
   def split(self, time: dt = dt.now()) -> tuple[Subscription | None, Subscription | None]:
     '''Split subscription into two subscriptions. Return tuple of new subscriptions.

@@ -65,8 +65,13 @@ class User(db.Document, UserMixin):
   
   def current_subscription(self, time: dt) -> Subscription | None:
     if not self.subscribed(time): return None
-    for subscription in self.subscriptions:
+    for subscription in self.subscriptions + self.allocated_subscriptions:
       if subscription.start <= time < subscription.end: return subscription
+  
+  def fragment(self, time: dt) -> SubscriptionFragment | None:
+    '''Fragment of subscription that contains given time.'''
+    if not (subscription := self.current_subscription(time)): return None
+    return subscription.fragment(time)
   
   def next_atime(self, time: dt) -> dt | None:
     '''Next allocation time for this user after given time.'''
