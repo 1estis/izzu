@@ -56,7 +56,6 @@ class SubscriptionFragment(db.EmbeddedDocument):
     if not views:
       # TODO: what if user has no views in distribution time?
       self.allocated = True
-      self.save()
       return
     
     weights: Weights = Weights.objects(user=self._instance, time__lte=end).order_by('-time').first()
@@ -75,7 +74,7 @@ class SubscriptionFragment(db.EmbeddedDocument):
     total_view_time = sum(royalty._view_time for royalty in royaltys.values())
     
     royaltys_weights: list[tuple[Royalty, Fraction]] = []
-    weights_sum = Fraction(1)
+    weights_sum = Fraction(0)
     
     # Calculate royalties
     for royalty in royaltys.values():
@@ -95,6 +94,9 @@ class SubscriptionFragment(db.EmbeddedDocument):
     
     for royalty, combined_coefficient in royaltys_combined_coefficients:
       royalty.amount = self.amount * combined_coefficient / total_combined_coefficient
+      
+      royalty.content.royalty_amount += royalty.amount
+      
         
     if (_sum := sum(royalty.amount for royalty in royaltys.values())) != self.amount:
       raise Exception('Sum of royalties is not equal to amount of subscription fragment'
@@ -140,7 +142,6 @@ class Subscription(db.EmbeddedDocument):
     self.fragments = []
     
     if residial := (duration := self.end - self.start) % RAI:
-      # amount_residial = amount * Fraction(residial, RAI)
       amount_residial = amount * Fraction(Fraction(residial.total_seconds()), Fraction(RAI.total_seconds()))
       amount -= amount_residial
     
@@ -151,9 +152,9 @@ class Subscription(db.EmbeddedDocument):
         end=self.start + (i + 1) * RAI,
       ))
     
-    if residial:
+    if amount_residial:
       self.fragments.append(SubscriptionFragment(
-        amount=amount_residial, # type: ignore
+        amount=amount_residial,
         start=self.end - residial,
         end=self.end,
       ))

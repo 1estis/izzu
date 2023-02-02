@@ -16,10 +16,6 @@ class Weight(db.EmbeddedDocument):
   @property
   def weight(self) -> Fraction:
     return Fraction(self.numinator, self.denominator)
-  
-  @weight.setter
-  def weight(self, value: Fraction):
-    self.numinator, self.denominator = value.numerator, value.denominator
 
 
 class Weights(db.Document):
@@ -64,17 +60,17 @@ class View(db.Document):
 class Royalty(db.EmbeddedDocument):
   id: int = db.SequenceField(primary_key=True)
   content: Content = db.ReferenceField(Content, required=True)
-  numinator: int = db.IntField(required=True)
-  denominator: int = db.IntField(required=True)
+  amount_numinator: int = db.IntField(required=True)
+  amount_denominator: int = db.IntField(required=True)
   _view_time: float = db.FloatField(required=True)
   
   @property
   def amount(self) -> Fraction:
-    return Fraction(self.numinator, self.denominator)
+    return Fraction(self.amount_numinator, self.amount_denominator)
   
   @amount.setter
   def amount(self, value: Fraction):
-    self.numinator, self.denominator = value.numerator, value.denominator
+    self.amount_numinator, self.amount_denominator = value.numerator, value.denominator
   
   @property
   def view_time(self) -> timedelta:
@@ -90,16 +86,16 @@ class Allocation(db.Document):
   user: sec.User = db.ReferenceField('sec.User', required=True)
   time: dt = db.DateTimeField(required=True)
   '''Time, when allocation was executed'''
-  numinator: int = db.IntField(required=True)
-  denominator: int = db.IntField(required=True)
+  amount_numinator: int = db.IntField(required=True)
+  amount_denominator: int = db.IntField(required=True)
   allocation_area_start: dt = db.DateTimeField(required=True)
   allocation_area_end: dt = db.DateTimeField(required=True)
   royaltys: list[Royalty] = db.ListField(db.EmbeddedDocumentField(Royalty))
   
   @property
   def amount(self) -> Fraction:
-    return Fraction(self.numinator, self.denominator)
+    return Fraction(self.amount_numinator, self.denominator)
   
   @amount.setter
   def amount(self, value: Fraction):
-    self.numinator, self.denominator = value.numerator, value.denominator
+    self.amount_numinator, self.denominator = value.numerator, value.denominator

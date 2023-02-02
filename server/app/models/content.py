@@ -1,5 +1,6 @@
 from __future__ import annotations
 from datetime import datetime as dt, date
+from fractions import Fraction
 from app import db
 from .dicts import ContentType, Language
 from .tools import DescriptionManager, MediafileManager, PosterManager, TitleManager
@@ -18,9 +19,19 @@ class Content(db.Document, TitleManager, PosterManager, DescriptionManager):
   code: str = db.StringField(max_length=255, primary_key=True, required=True)
   type: ContentType = db.ReferenceField(ContentType, required=True)
   release_date: date = db.DateField()
+  royalty_amount_numerator: int = db.IntField(required=True, default=0)
+  royalty_amount_denominator: int = db.IntField(required=True, default=1)
   added_date: dt = db.DateTimeField(default=dt.utcnow, required=True)
   original_language: Language = db.ReferenceField(Language, required=True)
   _code_pattern: str = r'^[a-z-0-9]+$'
+  
+  @property
+  def royalty_amount(self) -> Fraction:
+    return Fraction(self.royalty_amount_numerator, self.royalty_amount_denominator)
+  
+  @royalty_amount.setter
+  def royalty_amount(self, value: Fraction):
+    self.royalty_amount_numerator, self.royalty_amount_denominator = value.numerator, value.denominator
   
   @classmethod
   @property
