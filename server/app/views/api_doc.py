@@ -2,7 +2,7 @@ from flask import url_for
 from . import bl
 
 
-@bl.route('/api')
+@bl.route('/')
 def api_doc():
   # return api docs
   return {

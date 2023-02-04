@@ -8,7 +8,7 @@
 <script>
 	function user() {
 		var xhr = new XMLHttpRequest();
-		xhr.open('GET', 'http://127.0.0.1:5000/api/user', true);
+		xhr.open('GET', 'http://127.0.0.1:5000/user', true);
 		xhr.setRequestHeader('Content-Type', 'application/json');
 		
 		xhr.onload = function () {
@@ -19,7 +19,7 @@
 	}
 	function login() {
 		var xhr = new XMLHttpRequest();
-		xhr.open('POST', 'http://127.0.0.1:5000/api/login', true);
+		xhr.open('POST', 'http://127.0.0.1:5000/login', true);
 		xhr.setRequestHeader('Content-Type', 'application/json');
 
 		xhr.onload = function () {
@@ -33,7 +33,7 @@
 	}
 	function logout() {
 		var xhr = new XMLHttpRequest();
-		xhr.open('POST', 'http://127.0.0.1:5000/api/logout', true);
+		xhr.open('POST', 'http://127.0.0.1:5000/logout', true);
 		xhr.setRequestHeader('Content-Type', 'application/json');
 
 		xhr.onload = function () {
@@ -44,7 +44,7 @@
 	}
 	function change_password() {
 		var xhr = new XMLHttpRequest();
-		xhr.open('PUT', 'http://127.0.0.1:5000/api/change_password', true);
+		xhr.open('PUT', 'http://127.0.0.1:5000/change_password', true);
 		xhr.setRequestHeader('Content-Type', 'application/json');
 		
 		xhr.onload = function () {

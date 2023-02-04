@@ -1,26 +1,26 @@
-from flask import abort, request
-from flask_login import fresh_login_required, login_required, login_user, logout_user, current_user
+from flask import request
+from flask_security import login_user, logout_user, current_user
 from flask_security.utils import verify_password, hash_password
 
 from ..models.security import User
 from .. import user_datastore
-from . import bl, parse_dict
+from . import bl, parse_dict, login_required, fresh_login_required, abort
 
 current_user: User
 
 
-@bl.route('/api/user', methods=['GET'])
+@bl.route('/user', methods=['GET'])
 def user():
   res = {
     'message': 'user',
     'user':
-      parse_dict(current_user.to_mongo().to_dict(), exclude=['password'])
+      parse_dict(current_user.to_mongo().to_dict(), exclude=('password',))
       if current_user.is_authenticated else None,
   }
   return res
 
 
-@bl.route('/api/user', methods=['POST'])
+@bl.route('/user', methods=['POST'])
 @fresh_login_required
 def user_edit():
   username = request.json.get('username')
@@ -30,7 +30,7 @@ def user_edit():
   return { 'message': 'user updated' }
 
 
-@bl.route('/api/register', methods=['POST'])
+@bl.route('/register', methods=['POST'])
 def register():
   email = request.json.get('email')
   password = request.json.get('password')
@@ -48,8 +48,9 @@ def register():
   }
 
 
-@bl.route('/api/login', methods=['POST'])
+@bl.route('/login', methods=['POST'])
 def login():
+  if current_user.is_authenticated: return abort(302, 'already logged in')
   email = request.json.get('email')
   password = request.json.get('password')
   if not email or not password: return abort(400, 'email or password is missing')
@@ -61,7 +62,7 @@ def login():
   }
 
 
-@bl.route('/api/logout', methods=['POST'])
+@bl.route('/logout', methods=['POST'])
 def logout():
   logout_user()
   return {
@@ -69,7 +70,7 @@ def logout():
   }
 
 
-@bl.route('/api/change_password', methods=['PUT'])
+@bl.route('/change_password', methods=['PUT'])
 @login_required
 def change_password():
   password = request.json.get('current_password')

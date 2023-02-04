@@ -2,7 +2,7 @@ from flask import render_template_string
 from . import bl
 
 
-@bl.route('/api/test')
+@bl.route('/test')
 def test():
   return render_template_string('''
     <button onclick='user()'>User (GET)</button>
@@ -15,7 +15,7 @@ def test():
     <script>
       function user() {
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/api/user', true);
+        xhr.open('GET', '/user', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         
         xhr.onload = function () {
@@ -27,7 +27,7 @@ def test():
       }
       function login() {
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/api/login', true);
+        xhr.open('POST', '/login', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
 
         xhr.onload = function () {
@@ -41,7 +41,7 @@ def test():
       }
       function logout() {
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/api/logout', true);
+        xhr.open('POST', '/logout', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
 
         xhr.onload = function () {
@@ -52,7 +52,7 @@ def test():
       }
       function change_password() {
         var xhr = new XMLHttpRequest();
-        xhr.open('PUT', '/api/change_password', true);
+        xhr.open('PUT', '/change_password', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         
         xhr.onload = function () {

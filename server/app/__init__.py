@@ -30,16 +30,20 @@ user_datastore = MongoEngineUserDatastore(db, User, Role)
 
 def create_app(extra_config_settings={}):
   # Create a Flask applicaction.
-
+  
   # Instantiate Flask
   app = Flask(__name__)
   app.config.from_object('app.settings')
   app.config.from_object('app.local_settings')
   app.config.update(extra_config_settings)
-
+  
   # Setup db Mongo
   db.init_app(app)
-
+  
+  # Register blueprints
+  from .views import api
+  app.register_blueprint(api)
+  
   # Setup Flask-secure
   app.user_datastore: MongoEngineUserDatastore = user_datastore
   security.init_app(app, app.user_datastore)
@@ -47,19 +51,15 @@ def create_app(extra_config_settings={}):
   # Run async tasks
   from .models.tools import Task
   Task.run_handler_async()
-
+  
   # Setup Flask-Mail
   mail.init_app(app)
-
-  # Register blueprints
-  from .views import api
-  app.register_blueprint(api)
-
+  
   # Setup an error-logger to send emails to app.config.ADMINS
   init_email_error_handler(app)
-
+  
   app.config["TEMPLATES_AUTO_RELOAD"] = app.debug
-
+  
   return app
 
 
@@ -68,7 +68,7 @@ def init_email_error_handler(app):
   # Unhandled exceptions will now send an email message to app.config.ADMINS.
   if app.debug:
     return # Do not send error emails while developing
-
+  
   # Retrieve email settings from app.config
   host = app.config['MAIL_SERVER']
   port = app.config['MAIL_PORT']
@@ -76,15 +76,15 @@ def init_email_error_handler(app):
   username = app.config['MAIL_USERNAME']
   password = app.config['MAIL_PASSWORD']
   secure = () if app.config.get('MAIL_USE_TLS') else None
-
+  
   # Retrieve app settings from app.config
   to_addr_list = app.config['ADMINS']
   subject = app.config.get('APP_SYSTEM_ERROR_SUBJECT_LINE', 'System Error')
-
+  
   # Setup an SMTP mail handler for error-level messages
   import logging
   from logging.handlers import SMTPHandler
-
+  
   mail_handler = SMTPHandler(
     mailhost=(host, port),  # Mail host and port
     fromaddr=from_addr,  # From address
@@ -93,7 +93,7 @@ def init_email_error_handler(app):
     credentials=(username, password),  # Credentials
     secure=secure,
   )
-
+  
   # Log errors using: app.logger.error('Some error message')
   mail_handler.setLevel(logging.ERROR)
   app.logger.addHandler(mail_handler)

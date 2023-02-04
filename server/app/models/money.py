@@ -51,7 +51,7 @@ class SubscriptionFragment(db.EmbeddedDocument):
     if _now < self.atime: raise Exception(f'Fragment can be allocated only after {self.atime}')
     
     start, end = self.allocation_area
-    views: list[View] = View.objects(user=self._instance._instance, start_time__gte=start, start_time__lt=end)
+    views: list[View] = View.objects(user=self._instance._instance, time__gte=start, time__lt=end)
     
     if not views:
       # TODO: what if user has no views in distribution time?
@@ -220,7 +220,11 @@ class Subscription(db.EmbeddedDocument):
     return self.fragments[-1].atime
   
   def next_unallocated_fragment(self) -> SubscriptionFragment | None:
-    if not self.fragments: raise Exception('Subscription has no fragments, you should call calculate_fragments() for subscription after creating it')
+    if not self.fragments: raise Exception(
+      'Subscription has no fragments, '
+      'you should call calculate_fragments() '
+      'for subscription after creating it'
+    )
     if self.fragments[-1].allocated: return None
     for fragment in self.fragments:
       if not fragment.allocated:

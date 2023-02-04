@@ -35,6 +35,7 @@ class User(db.Document, UserMixin):
   
   @view_time.setter
   def view_time(self, value: timedelta):
+    '''The amount of time user can watch content'''
     self._view_time = value.total_seconds()
   
   @property
@@ -106,13 +107,17 @@ class User(db.Document, UserMixin):
       if atime: return atime
   
   def add_view(self, content: Content, view_time: timedelta, time: dt):
-    last_view: View | None = View.objects(user=self, content=content).order_by('-start_time').first()
+    last_view: View | None = View.objects(
+      user=self, content=content).order_by('-time').first()
     
-    if last_view and self.next_atime(last_view.start_time) > time:
+    if last_view and self.next_atime(last_view.time) > time:
       last_view.duration += view_time
       last_view.save()
     else:
-      View(user=self, content=content, start_time=time, view_time=view_time).save()
+      View(
+        user=self, content=content,
+        time=time, view_time=view_time
+      ).save()
     
     self.view_time -= view_time
     self.save()

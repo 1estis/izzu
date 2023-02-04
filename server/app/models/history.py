@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 from datetime import datetime as dt, timedelta
 from fractions import Fraction
@@ -43,7 +42,7 @@ class Weights(db.Document):
     # ignore weights with zero value or if user has not viewed content in allocation time
     if fragment := self.user.fragment(self.time):
       start, end = fragment.allocation_area
-      if views := View.objects(user=self.user, start_time__gte=start, start_time__lt=end):
+      if views := View.objects(user=self.user, time__gte=start, time__lt=end):
         views: list[Content] = [v.content for v in views]
         self.weights = [w for w in self.weights if w.unit in views]
     super().save(*args, **values)
@@ -53,7 +52,7 @@ class View(db.Document):
   id: int = db.SequenceField(primary_key=True)
   user: sec.User = db.ReferenceField('sec.User', required=True)
   content: Content = db.ReferenceField(Content, required=True)
-  start_time: dt = db.DateTimeField(required=True)
+  time: dt = db.DateTimeField(required=True)
   _view_time: float = db.FloatField(required=True)
   
   @property
