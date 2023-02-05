@@ -41,9 +41,9 @@ def create_app(extra_config_settings={}):
   db.init_app(app)
   
   # Register blueprints
-  from .views.api import bl
+  from app.blueprints.api import bl
   app.register_blueprint(bl)
-  from .views.api_test import bl
+  from app.blueprints.ui import bl
   app.register_blueprint(bl)
   
   # Setup Flask-secure

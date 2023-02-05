@@ -4,7 +4,7 @@ from flask_security.utils import verify_password, hash_password
 
 from app import user_datastore
 from app.models import User, ConfirmEmail, ResetPassword
-from app.views.utils import parse_dict, abort, fresh_login_required, \
+from app.blueprints.utils import parse_dict, abort, fresh_login_required, \
   login_required
 from . import bl
 
@@ -66,7 +66,7 @@ def send_confirm_email():
   }
 
 
-@bl.post('/confirm_email/<code>') # TODO: write test page for get request
+@bl.post('/confirm_email/<code>') # TODO: write page for get request
 def confirm_email(code):
   if ConfirmEmail.confirm(code):
     return {
@@ -130,7 +130,7 @@ def send_reset_password_email():
   }
 
 
-@bl.post('/reset_password/<code>') # TODO: write test page for get request
+@bl.post('/reset_password/<code>') # TODO: write page for get request
 def reset_password(code):
   password = request.json.get('password')
   if not password: return abort(400, 'password is missing')

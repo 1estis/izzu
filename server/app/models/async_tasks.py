@@ -28,7 +28,7 @@ class ConfirmEmail(Task):
     if obj := cls.objects(user=user).first(): obj.delete()
     obj = cls(user=user, time=dt.now() + timedelta(days=1))
     link = f'{link}/{obj.code}' if link else \
-      f'{url_for("api_test.confirm_email", code=obj.code, _external=True)}'
+      f'{url_for("ui.confirm_email", code=obj.code, _external=True)}'
     obj.send(link)
     obj.save()
   
@@ -67,7 +67,7 @@ class ResetPassword(Task):
     if obj := cls.objects(user=user).first(): obj.delete()
     obj = cls(user=user, code=generate_code(), time=dt.now() + timedelta(days=1))
     link = f'{link}/{obj.code}' if link else \
-      f'{url_for("api_test.reset_password", code=obj.code, _external=True)}'
+      f'{url_for("ui.reset_password", code=obj.code, _external=True)}'
     obj.send(link)
     obj.save()
   
