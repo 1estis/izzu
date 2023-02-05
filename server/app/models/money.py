@@ -169,11 +169,12 @@ class Subscription(db.EmbeddedDocument):
         return fragment
     return None
 
-  def split(self, time: dt = dt.now()) -> tuple[Subscription | None, Subscription | None]:
+  def split(self, time: dt = ...) -> tuple[Subscription | None, Subscription | None]:
     '''Split subscription into two subscriptions. Return tuple of new subscriptions.
     If time is before start of subscription, return subscription and None.
     If time is after end of subscription, return None and subscription.'''
     
+    if time is ...: time = dt.now()
     if time < self.start: return self, None
     if time > self.end: return None, self
     
@@ -198,18 +199,20 @@ class Subscription(db.EmbeddedDocument):
     
     return self, subscription2
   
-  def next_atime(self, time: dt = dt.now()) -> dt | None:
+  def next_atime(self, time: dt = ...) -> dt | None:
     '''Next distribution time after time'''
     
+    if time is ...: time = dt.now()
     if self.final_atime() < time: return None
     
     for fragment in self.fragments:
       if (atime := fragment.atime) > time:
         return atime
   
-  def previous_atime(self, time: dt = dt.now()) -> dt | None:
+  def previous_atime(self, time: dt = ...) -> dt | None:
     '''Previous distribution time before time'''
     
+    if time is ...: time = dt.now()
     if self.start > time: return None
     
     for fragment in reversed(self.fragments):

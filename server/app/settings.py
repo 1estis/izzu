@@ -5,7 +5,8 @@ import os
 # An example file (env_settings_example.py) can be used as a starting point
 
 # Application settings
-APP_NAME = 'izzu.me'
+APP_NAME = 'IZZU'
+SITE_NAME = 'izzu.me'
 SERVER_NAME = os.environ.get('SERVER_NAME')
 APP_SYSTEM_ERROR_SUBJECT_LINE = APP_NAME + ' system error'
 
@@ -26,11 +27,11 @@ WTF_CSRF_ENABLED = False
 
 # Flask-Mail settings
 
+MAIL_FROM_NAME = 'Izzu'
 MAIL_SERVER = 'smtp.gmail.com'
 MAIL_PORT = 587
 MAIL_USE_SSL = False
 MAIL_USE_TLS = True
-MAIL_DEFAULT_SENDER = '"Name" <kulaykin2000@gmail.com>'
 
 # For local environment settings and secrets, create a file called local_settings.py
 # Optional settings:
@@ -45,7 +46,7 @@ MAIL_DEFAULT_SENDER = '"Name" <kulaykin2000@gmail.com>'
 # SECURITY_PASSWORD_SALT = 'DO_NOT_use_Unsecure_Secrets_in_production'
 # MAIL_USERNAME = 'MAIL_USERNAME'
 # MAIL_PASSWORD = 'MAIL_PASSWORD'
-# MAIL_DEFAULT_SENDER = '"Name" <MAIL_USERNAME>'
+# MAIL_FROM = 'MAIL_FROM'
 
 # ADMINS = [
 #     '"Admin" <MAIL_USERNAME>',

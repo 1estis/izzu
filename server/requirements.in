@@ -12,7 +12,7 @@ email-validator
 Flask
 Flask-Security
 Flask-Login
-Flask-Mail
+Flask-Mailing
 Flask-Migrate
 flask-mongoengine
 Flask-Principal

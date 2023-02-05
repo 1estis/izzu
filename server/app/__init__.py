@@ -2,7 +2,7 @@ from datetime import timedelta
 from fractions import Fraction
 import mongoengine
 from flask import Flask
-from flask_mail import Mail
+from flask_mailing import Mail
 from flask_migrate import Migrate
 from flask_mongoengine import MongoEngine
 from flask_security import MongoEngineUserDatastore, Security
@@ -24,7 +24,7 @@ mail = Mail()
 migrate = Migrate()
 security = Security()
 
-from .models.security import User, Role
+from .models import User, Role
 user_datastore = MongoEngineUserDatastore(db, User, Role)
 
 
@@ -41,15 +41,17 @@ def create_app(extra_config_settings={}):
   db.init_app(app)
   
   # Register blueprints
-  from .views import api
-  app.register_blueprint(api)
+  from .views.api import bl
+  app.register_blueprint(bl)
+  from .views.api_test import bl
+  app.register_blueprint(bl)
   
   # Setup Flask-secure
   app.user_datastore: MongoEngineUserDatastore = user_datastore
   security.init_app(app, app.user_datastore)
   
   # Run async tasks
-  from .models.tools import Task
+  from .models import Task
   Task.run_handler_async()
   
   # Setup Flask-Mail
@@ -63,10 +65,11 @@ def create_app(extra_config_settings={}):
   return app
 
 
-def init_email_error_handler(app):
+def init_email_error_handler(app: Flask):
   # Initialize a logger to send emails on error-level messages.
   # Unhandled exceptions will now send an email message to app.config.ADMINS.
   if app.debug:
+    print('Debug mode is on. Email error handler is disabled.')
     return # Do not send error emails while developing
   
   # Retrieve email settings from app.config

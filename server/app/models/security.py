@@ -21,7 +21,7 @@ class User(db.Document, UserMixin):
   email: str = db.StringField(max_length=255, required=True, unique=True)
   password: str = db.StringField(max_length=255, required=True)
   roles: list = db.ListField(db.ReferenceField(Role), default=[])
-  confirmed_at: dt | None = db.DateTimeField(default=None)
+  confirmed: dt | None = db.DateTimeField(default=None)
   _view_time: float = db.FloatField(required=True, default=0)
   subscriptions: list[Subscription] = db.ListField(db.EmbeddedDocumentField(Subscription), default=[])
   allocated_subscriptions: list[Subscription] = db.ListField(db.EmbeddedDocumentField(Subscription), default=[])
@@ -122,8 +122,9 @@ class User(db.Document, UserMixin):
     self.view_time -= view_time
     self.save()
   
-  def subscribe(self, payment: Payment, duration: timedelta, time: dt = dt.now()):
+  def subscribe(self, payment: Payment, duration: timedelta, time: dt = ...):
     '''Subscribe user for given duration of time.'''
+    if time is ...: time = dt.now()
     if not self.subscription_paused:
       if not (sed := self.subscription_end_date): sed = time
       self.subscriptions.append(
@@ -170,16 +171,18 @@ class User(db.Document, UserMixin):
         if split2: second_list.append(split2)
     return first_list, second_list
     
-  def pause_subscription(self, time: dt = dt.now()):
+  def pause_subscription(self, time: dt = ...):
     '''Pause the subscription by splitting the last subscription into two and adding the second part to pending subscriptions.'''
     if self.subscription_paused: return
+    if time is ...: time = dt.now()
     if not self.subscribed(time): return
     self.subscriptions, self.pending_subscriptions = self._split_subscription_list_by_time(self.subscriptions, time)
     self.subscription_paused = True
   
-  def resume_subscription(self, time: dt = dt.now()):
+  def resume_subscription(self, time: dt = ...):
     '''Resume the subscription by moving the pending subscriptions to the main subscription list.'''
     if not self.subscription_paused: return
+    if time is ...: time = dt.now()
     if not (sed := self.subscription_end_date) or sed < time: sed = time
     for subscription in self.pending_subscriptions:
       subscription.move_to(sed)

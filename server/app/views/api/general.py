@@ -1,14 +1,14 @@
 from __future__ import annotations
-from flask import redirect, url_for
+from flask import redirect, send_from_directory, url_for
 from flask_security.utils import hash_password
 
 from datetime import datetime as dt
 
-from .. import user_datastore
+from app import user_datastore
 from . import bl
 
-from ..models.content import ContentType
-from ..models.dicts import Language
+from app.models.content import ContentType
+from app.models.dicts import Language
 
 
 @bl.before_app_first_request
@@ -18,7 +18,7 @@ def init():
     user_datastore.create_user(
       username='admin',
       email='admin@self.com',
-      confirmed_at=dt.now(),
+      confirmed=dt.now(),
       password=hash_password('vxtr5w7c_nxd'),
       roles=['admin']
     )
@@ -53,6 +53,11 @@ def init():
       .set_title(Language.default, 'Anime', False)\
       .set_title(Language.default, 'Anime', False, True)\
       .save()
+
+
+@bl.route('/favicon.ico')
+def favicon():
+  return send_from_directory('static', 'favicon.ico')
 
 
 @bl.route('/')

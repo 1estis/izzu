@@ -1,5 +1,4 @@
 from functools import wraps
-from flask import Blueprint, request, abort
 from flask_login import current_user
 
 
@@ -35,12 +34,3 @@ def fresh_login_required(f):
     return f(*args, **kwargs)
 
   return wrapper
-
-
-bl = Blueprint('api', __name__)
-from .api import bl # register routes
-from .api_doc import bl # continue register routes...
-from .api_test import bl
-from .api_security import bl
-
-api = bl
