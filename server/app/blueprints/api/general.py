@@ -53,13 +53,3 @@ def init():
       .set_title(Language.default, 'Anime', False)\
       .set_title(Language.default, 'Anime', False, True)\
       .save()
-
-
-@bl.route('/favicon.ico')
-def favicon():
-  return send_from_directory('static', 'favicon.ico')
-
-
-@bl.route('/')
-def home():
-  return redirect(url_for('api.api_doc'))

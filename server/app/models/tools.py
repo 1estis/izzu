@@ -32,16 +32,16 @@ class Task(db.Document):
     while True:
       if task := cls.next():
         
-        if (time := task.time) <= dt.now():
+        if (time := task.time) <= (now := dt.now()):
           
           try: task.do()
           except Exception as e:
             task.error = str(e)
             task.save()
         
-        else: sleep(min(1, (time - dt.now()).total_seconds()))
+        else: sleep(min(60, (time - now).total_seconds()))
       
-      else: sleep(1)
+      else: sleep(60)
   
   @classmethod
   def run_handler_async(cls):
