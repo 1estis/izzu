@@ -66,14 +66,16 @@ def send_confirm_email():
   }
 
 
-@bl.post('/confirm_email/<code>') # TODO: write page for get request
-def confirm_email(code):
-  if ConfirmEmail.confirm(code):
+@bl.post('/confirm_email')
+def confirm_email():
+  token = request.json.get('token')
+  if not token: return abort(400, 'token is missing')
+  if ConfirmEmail.confirm(token):
     return {
       'message': 'email confirmed',
     }
   else:
-    return abort(404, 'confirmation code is invalid or expired')
+    return abort(404, 'confirmation token is invalid, expired or already used')
 
 
 @bl.post('/login')
@@ -103,7 +105,7 @@ def logout():
 @bl.put('/change_password')
 @login_required
 def change_password():
-  password = request.json.get('current_password')
+  password = request.json.get('password')
   new_password = request.json.get('new_password')
   if not password or not new_password:
     return abort(400, 'password or new_password is missing')
@@ -130,13 +132,15 @@ def send_reset_password_email():
   }
 
 
-@bl.post('/reset_password/<code>') # TODO: write page for get request
-def reset_password(code):
+@bl.post('/reset_password/')
+def reset_password():
+  token = request.json.get('token')
+  if not token: return abort(400, 'token is missing')
   password = request.json.get('password')
   if not password: return abort(400, 'password is missing')
-  if ResetPassword.reset(code, hash_password(password)):
+  if ResetPassword.reset(token, hash_password(password)):
     return {
       'message': 'password reset',
     }
   else:
-    return abort(404, 'code is invalid or expired')
+    return abort(404, 'token is invalid or expired')

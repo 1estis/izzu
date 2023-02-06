@@ -10,15 +10,15 @@ from app.models.security import User
 
 
 def generate_code(length: int = 64) -> str:
-  '''Generate a random code.'''
+  '''Generate a random token.'''
   return token_urlsafe(length)
 
 
 class ConfirmEmail(Task):
   '''Confirmation email for user.'''
-  code: str = db.StringField(required=True, default=generate_code)
+  token: str = db.StringField(required=True, default=generate_code)
   user: User = db.ReferenceField(User, required=True)
-  meta = {'indexes': ['code']}
+  meta = {'indexes': ['token']}
   
   def do(self):
     self.delete()
@@ -27,8 +27,8 @@ class ConfirmEmail(Task):
   def new(cls, user: User, link: str | None):
     if obj := cls.objects(user=user).first(): obj.delete()
     obj = cls(user=user, time=dt.now() + timedelta(days=1))
-    link = f'{link}/{obj.code}' if link else \
-      f'{url_for("ui.confirm_email", code=obj.code, _external=True)}'
+    link = f'{link}/{obj.token}' if link else \
+      f'{url_for("ui.confirm_email", token=obj.token, _external=True)}'
     obj.send(link)
     obj.save()
   
@@ -44,8 +44,8 @@ class ConfirmEmail(Task):
     ).start()
   
   @classmethod
-  def confirm(cls, code: str):
-    confirm_email: ConfirmEmail | None = cls.objects(code=code).first()
+  def confirm(cls, token: str):
+    confirm_email: ConfirmEmail | None = cls.objects(token=token).first()
     if not confirm_email or confirm_email.time < dt.now(): return False
     confirm_email.user.confirmed = dt.now()
     confirm_email.user.save()
@@ -55,9 +55,9 @@ class ConfirmEmail(Task):
 
 class ResetPassword(Task):
   '''Reset password task.'''
-  code: str = db.StringField(required=True)
+  token: str = db.StringField(required=True)
   user: User = db.ReferenceField(User, required=True)
-  meta = {'indexes': ['code']}
+  meta = {'indexes': ['token']}
   
   def do(self):
     self.delete()
@@ -65,9 +65,9 @@ class ResetPassword(Task):
   @classmethod
   def new(cls, user: User, link: str | None):
     if obj := cls.objects(user=user).first(): obj.delete()
-    obj = cls(user=user, code=generate_code(), time=dt.now() + timedelta(days=1))
-    link = f'{link}/{obj.code}' if link else \
-      f'{url_for("ui.reset_password", code=obj.code, _external=True)}'
+    obj = cls(user=user, token=generate_code(), time=dt.now() + timedelta(days=1))
+    link = f'{link}/{obj.token}' if link else \
+      f'{url_for("ui.reset_password", token=obj.token, _external=True)}'
     obj.send(link)
     obj.save()
   
@@ -83,8 +83,8 @@ class ResetPassword(Task):
     ).start()
   
   @classmethod
-  def reset(cls, code: str, password: str):
-    reset_password: ResetPassword | None = cls.objects(code=code).first()
+  def reset(cls, token: str, password: str):
+    reset_password: ResetPassword | None = cls.objects(token=token).first()
     if not reset_password or reset_password.time < dt.now(): return False
     reset_password.user.password = password
     reset_password.user.save()

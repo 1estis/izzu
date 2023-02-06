@@ -1,39 +1,35 @@
-from flask import render_template_string, url_for, current_app as app
-from . import bl
+from flask import render_template_string, current_app as app
+from . import bl, style
 
 
 @bl.route('/security')
 def security():
   return render_template_string(
+    f'{style}'
     '''
+    <a href='{{ url_for('ui.home') }}'>Home</a>
+    <br>
     <button onclick='user()'>User (GET)</button>
     <button onclick='logout()'>Logout (POST)</button>
     <br>
-    <input type='text' id='email' placeholder='email' value='email@exemple.com'>
+    <input type='text' id='email' placeholder='email@exemple.com'>
     <button onclick='login()'>Login (POST)</button>
     <button onclick='register()'>Register (POST)</button>
     <br>
-    <input type='text' id='password' placeholder='password' value='password'>
+    <input type='text' id='password' placeholder='password'>
     <button onclick='confirm_email()'>Confirm email (POST)</button>
     <button onclick='reset_password()'>Reset password (POST)</button>
     <br>
-    <input type='text' id='new_password' placeholder='new_password' value='password'>
+    <input type='text' id='new_password' placeholder='new_password'>
     <button onclick='change_password()'>Change password (PUT)</button>
     <br>
     
     <div id='security_result'></div>
 
-    <script src='{{ url_for('ui.security_script') }}'></script>
-  ''')
-
-
-@bl.route('/security/script.js')
-def security_script():
-  return render_template_string(
-    '''
+    <script>
     function user() {
       var xhr = new XMLHttpRequest();
-      xhr.open('GET', '/user', true);
+      xhr.open('GET', '{{ url_for('api.user') }}', true);
       xhr.setRequestHeader('Content-Type', 'application/json');
       
       xhr.onload = function () {
@@ -45,7 +41,7 @@ def security_script():
     }
     function login() {
       var xhr = new XMLHttpRequest();
-      xhr.open('POST', '/login', true);
+      xhr.open('POST', '{{ url_for('api.login') }}', true);
       xhr.setRequestHeader('Content-Type', 'application/json');
 
       xhr.onload = function () {
@@ -59,7 +55,7 @@ def security_script():
     }
     function logout() {
       var xhr = new XMLHttpRequest();
-      xhr.open('POST', '/logout', true);
+      xhr.open('POST', '{{ url_for('api.logout') }}', true);
       xhr.setRequestHeader('Content-Type', 'application/json');
 
       xhr.onload = function () {
@@ -70,7 +66,7 @@ def security_script():
     }
     function change_password() {
       var xhr = new XMLHttpRequest();
-      xhr.open('PUT', '/change_password', true);
+      xhr.open('PUT', '{{ url_for('api.change_password') }}', true);
       xhr.setRequestHeader('Content-Type', 'application/json');
       
       xhr.onload = function () {
@@ -84,7 +80,7 @@ def security_script():
     }
     function register() {
       var xhr = new XMLHttpRequest();
-      xhr.open('POST', '/register', true);
+      xhr.open('POST', '{{ url_for('api.register') }}', true);
       xhr.setRequestHeader('Content-Type', 'application/json');
       
       xhr.onload = function () {
@@ -98,7 +94,7 @@ def security_script():
     }
     function confirm_email() {
       var xhr = new XMLHttpRequest();
-      xhr.open('POST', '/send_confirm_email', true);
+      xhr.open('POST', '{{ url_for('api.send_confirm_email') }}', true);
       xhr.setRequestHeader('Content-Type', 'application/json');
       
       xhr.onload = function () {
@@ -112,7 +108,7 @@ def security_script():
     }
     function reset_password() {
       var xhr = new XMLHttpRequest();
-      xhr.open('POST', '/send_reset_password_email', true);
+      xhr.open('POST', '{{ url_for('api.send_reset_password_email') }}', true);
       xhr.setRequestHeader('Content-Type', 'application/json');
       
       xhr.onload = function () {
@@ -123,5 +119,77 @@ def security_script():
         email: document.getElementById('email').value,
       })); 
     }
+    </script>
+    '''
+  )
+
+
+@bl.route('/security/confirm_email/<token>')
+def confirm_email(token):
+  return render_template_string(
+    f'{style}'
+    '''
+    <a href='{{ url_for('ui.home') }}'>Home</a>
+    <div style='display: flex;'>
+    '''f''' 
+    <input type='text' id='token' placeholder='token' value='{token}' style='flex-grow: 1;'>
+    ''''''
+    </div>
+    <button onclick='confirm_email()'>Confirm email (POST)</button>
+    <br>
+    <div id='security_result'></div>
+
+    <script>
+    function confirm_email() {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '{{ url_for('api.confirm_email') }}', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      
+      xhr.onload = function () {
+        console.log(this.responseText);
+        document.getElementById('security_result').innerHTML = this.responseText;
+      };
+      xhr.send(JSON.stringify({
+        token: document.getElementById('token').value,
+      }));
+    }
+    confirm_email();
+    </script>
+    '''
+  )
+
+
+@bl.route('/security/reset_password/<token>')
+def reset_password(token):
+  return render_template_string(
+    f'{style}'
+    '''
+    <a href='{{ url_for('ui.home') }}'>Home</a>
+    <div style='display: flex;'>
+    '''f''' 
+    <input type='text' id='token' placeholder='token' value='{token}' style='flex-grow: 1;'>
+    ''''''
+    </div>
+    <input type='text' id='password' placeholder='password'>
+    <button onclick='reset_password()'>Reset password (POST)</button>
+    <br>
+    <div id='security_result'></div>
+
+    <script>
+    function reset_password() {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '{{ url_for('api.reset_password') }}', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      
+      xhr.onload = function () {
+        console.log(this.responseText);
+        document.getElementById('security_result').innerHTML = this.responseText;
+      };
+      xhr.send(JSON.stringify({
+        token: document.getElementById('token').value,
+        password: document.getElementById('password').value,
+      }));
+    }
+    </script>
     '''
   )

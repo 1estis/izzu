@@ -41,6 +41,8 @@ def create_app(extra_config_settings={}):
   db.init_app(app)
   
   # Register blueprints
+  from app.blueprints.general import bl
+  app.register_blueprint(bl)
   from app.blueprints.api import bl
   app.register_blueprint(bl)
   from app.blueprints.ui import bl
