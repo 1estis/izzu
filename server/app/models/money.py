@@ -131,14 +131,17 @@ class Subscription(db.EmbeddedDocument):
   payment: Payment = db.EmbeddedDocumentField(Payment, required=True)
   start: dt = db.DateTimeField(required=True)
   end: dt = db.DateTimeField(required=True)
-  fragments: list[SubscriptionFragment] = db.ListField(db.EmbeddedDocumentField(SubscriptionFragment), default=[])
+  fragments: list[SubscriptionFragment] = db.EmbeddedDocumentListField(SubscriptionFragment, required=True, default=list)
   
   def allocate_next_fragment(self) -> None:
     '''Allocate next fragment of subscription'''
     if fragment := self.next_unallocated_fragment():
       fragment.allocate()
+    else:
+      raise Exception('No unallocated fragments')
   
   def calculate_fragments(self):
+    if self.fragments: raise Exception('Fragments already calculated')
     amount = self.payment.amount * (1 - SERVICE_FEE)
     self.fragments = []
     
@@ -162,12 +165,12 @@ class Subscription(db.EmbeddedDocument):
     
     return self
   
-  def fragment(self, time: dt) -> SubscriptionFragment | None:
-    '''Return fragment of subscription at time. Return None if time is out of subscription range.'''
-    for fragment in self.fragments:
-      if fragment.start <= time < fragment.end:
-        return fragment
-    return None
+  def fragment(self, time: dt):
+    '''Return fragment of subscription at time.
+    Return None if time is out of subscription range.'''
+    fragment: SubscriptionFragment | None = \
+      self.fragments.get(start__lte=time, end__gt=time).first()
+    return fragment
 
   def split(self, time: dt = ...) -> tuple[Subscription | None, Subscription | None]:
     '''Split subscription into two subscriptions. Return tuple of new subscriptions.

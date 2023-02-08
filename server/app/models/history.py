@@ -33,23 +33,21 @@ class Weights(db.Document):
   :param user: user
   :param time: time of weights
   :param weights: weights of content'''
-  id: int = db.SequenceField(primary_key=True)
   user: sec.User = db.ReferenceField('sec.User', required=True)
   time: dt = db.DateTimeField(required=True, default=dt.now)
-  weights: list[Weight] = db.ListField(db.EmbeddedDocumentField(Weight))
+  weights: list[Weight] = db.EmbeddedDocumentListField(Weight, required=True, default=list)
   
   def save(self, *args, **values):
     # ignore weights with zero value or if user has not viewed content in allocation time
     if fragment := self.user.fragment(self.time):
       start, end = fragment.allocation_area
-      if views := View.objects(user=self.user, time__gte=start, time__lt=end):
+      if views := View.objects(user=self.user, time__gte=start, time__lt=end): # TODO: optimize, use views from user
         views: list[Content] = [v.content for v in views]
         self.weights = [w for w in self.weights if w.unit in views]
     super().save(*args, **values)
 
 
 class View(db.Document):
-  id: int = db.SequenceField(primary_key=True)
   user: sec.User = db.ReferenceField('sec.User', required=True)
   content: Content = db.ReferenceField(Content, required=True)
   time: dt = db.DateTimeField(required=True)
@@ -95,10 +93,10 @@ class Allocation(db.Document):
   '''Time, when allocation was executed'''
   amount_numerator: int = db.IntField(required=True)
   amount_denominator: int = db.IntField(required=True)
-  currency: Currency = db.ReferenceField(Currency, required=True)
+  currency = db.ReferenceField(Currency, required=True)
   allocation_area_start: dt = db.DateTimeField(required=True)
   allocation_area_end: dt = db.DateTimeField(required=True)
-  royaltys: list[Royalty] = db.ListField(db.EmbeddedDocumentField(Royalty))
+  royaltys: list[Royalty] = db.EmbeddedDocumentListField(Royalty)
   
   @property
   def amount(self) -> Fraction:

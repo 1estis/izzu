@@ -11,7 +11,7 @@ class Title(db.EmbeddedDocument):
 
 class Poster(db.EmbeddedDocument):
   language: dicts.Language = db.ReferenceField('dicts.Language', primary_key=True)
-  paths: list[str] = db.ListField(db.StringField(max_length=255, required=True, unique=True), default=[])
+  paths: list[str] = db.ListField(db.StringField(max_length=255, required=True, unique=True), default=list)
 
 
 class Description(db.EmbeddedDocument):

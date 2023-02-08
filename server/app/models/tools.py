@@ -52,18 +52,23 @@ class Task(db.Document):
 class TitleManager:
   _title: str = db.StringField(max_length=255, required=True)
   _plural: str = db.StringField(max_length=255)
-  _titles: list[_types.Title] = db.ListField(db.EmbeddedDocumentField(_types.Title, unique=True), default=[])
-  _plurals: list[_types.Title] = db.ListField(db.EmbeddedDocumentField(_types.Title, unique=True), default=[])
+  _titles: list[_types.Title] = db.EmbeddedDocumentListField(_types.Title, unique=True, default=list)
+  _plurals: list[_types.Title] = db.EmbeddedDocumentListField(_types.Title, unique=True, default=list)
   plural_title: bool = False
   
-  def title(self, language: dicts.Language | None = None, default: bool = True, plural: bool = False) -> str:
+  def title(self, language: dicts.Language | None = None, default: bool = True, plural: bool = False):
     if language is None or language.code == DLC:
       if plural: return self._plural if self._plural else self._title if default else ''
       else: return self._title
-    for t in self._plurals if plural else self._titles:
-      if t.language == language:
-        return t.title
-    return self.title(language, default) if plural and default else self._title if default else ''
+    title_list = self._plurals if plural else self._titles
+    t: _types.Title | None = title_list.get(language=language)
+    if t: return t.title
+    if not default: return ''
+    if plural:
+      t: _types.Title | None = self._titles.get(language=language)
+      if t: return t.title
+      return self._plural or self._title
+    return self._title
   
   def set_title(self, language: dicts.Language | None, title: str, save: bool = True, plural: bool = False) -> Self:
     if title == '': return self.remove_title(language, save, plural) if language else self
@@ -92,7 +97,7 @@ class TitleManager:
 
 
 class PosterManager:
-  _posters: list[_types.Poster] = db.ListField(db.EmbeddedDocumentField(_types.Poster), default=[])
+  _posters: list[_types.Poster] = db.EmbeddedDocumentListField(_types.Poster, unique=True, default=list)
   
   def poster(self, language: dicts.Language | None = None) -> str:
     ln_code = language.code if language else DLC
@@ -131,7 +136,7 @@ class PosterManager:
 
 
 class DescriptionManager:
-  _descriptions: list[_types.Description] = db.ListField(db.EmbeddedDocumentField(_types.Description), default=[])
+  _descriptions: list[_types.Description] = db.EmbeddedDocumentListField(_types.Description, unique=True, default=list)
   
   def description(self, language: dicts.Language | None = None) -> str:
     ln_code = language.code if language else DLC

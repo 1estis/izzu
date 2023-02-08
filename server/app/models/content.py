@@ -9,7 +9,7 @@ from ._types import CurrencyAmount
 class Mediafile(db.EmbeddedDocument):
   # size: int = db.IntField(required=True)
   language: Language = db.ReferenceField(Language, required=True)
-  # genres: list[Genre] = db.ListField(db.ReferenceField(Genre), default=[])
+  # genres: list[Genre] = db.EmbeddedDocumentListField(Genre, default=list)
   # duration: int = db.IntField()
   # resolution: str = db.StringField(max_length=255)
 
@@ -20,23 +20,23 @@ class Content(db.Document, TitleManager, PosterManager, DescriptionManager):
   code: str = db.StringField(max_length=255, primary_key=True, required=True)
   type: ContentType = db.ReferenceField(ContentType, required=True)
   release_date: date = db.DateField()
-  royalty_amounts: list[CurrencyAmount] = db.ListField(db.EmbeddedDocumentField(CurrencyAmount), default=[])
+  royalty_amounts: list[CurrencyAmount] = db.EmbeddedDocumentListField(CurrencyAmount, default=list)
   added_date: dt = db.DateTimeField(default=dt.utcnow, required=True)
   original_language: Language = db.ReferenceField(Language, required=True)
   _code_pattern: str = r'^[a-z-0-9]+$'
   
-  def royalty_amount(self, currency: Currency) -> Fraction:
-    for amount in self.royalty_amounts:
-      if amount.currency == currency:
-        return amount.amount
+  def royalty_amount(self, currency: Currency):
+    if currency_amount := self.royalty_amounts.get(currency=currency):
+      currency_amount: CurrencyAmount
+      return currency_amount.amount
     return Fraction(0)
   
   def add_royalty_amount(self, currency: Currency, amount: Fraction):
-    for royalty_amount in self.royalty_amounts:
-      if royalty_amount.currency == currency:
-        royalty_amount.amount += amount
-        return
-    self.royalty_amounts.append(CurrencyAmount(currency=currency, amount=amount))
+    if currency_amount := self.royalty_amounts.get(currency=currency):
+      currency_amount: CurrencyAmount
+      currency_amount.amount += amount
+    else:
+      self.royalty_amounts.append(CurrencyAmount(currency=currency, amount=amount))
   
   @classmethod
   @property
@@ -65,11 +65,11 @@ class Episode(db.EmbeddedDocument, MediafileManager, DescriptionManager, TitleMa
 
 class Season(db.EmbeddedDocument, DescriptionManager, TitleManager):
   number: int = db.IntField(primary_key=True)
-  episodes: list[Episode] = db.ListField(db.EmbeddedDocumentField(Episode, unique=True), default=[])
+  episodes: list[Episode] = db.EmbeddedDocumentListField(Episode, default=list)
 
 
 class Series(Content):
-  seasons: list[Season] = db.ListField(db.EmbeddedDocumentField(Season, unique=True), default=[])
+  seasons: list[Season] = db.EmbeddedDocumentListField(Season, default=list)
 
 
 class File(db.Document):

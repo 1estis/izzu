@@ -20,15 +20,16 @@ class User(db.Document, UserMixin):
   username: str = db.StringField(max_length=80, required=True)
   email: str = db.StringField(max_length=255, required=True, unique=True)
   password: str = db.StringField(max_length=255, required=True)
-  roles: list = db.ListField(db.ReferenceField(Role), default=[])
+  roles: list = db.ListField(db.ReferenceField(Role), default=list)
   confirmed: dt | None = db.DateTimeField(default=None)
   _view_time: float = db.FloatField(required=True, default=0)
-  subscriptions: list[Subscription] = db.ListField(db.EmbeddedDocumentField(Subscription), default=[])
-  allocated_subscriptions: list[Subscription] = db.ListField(db.EmbeddedDocumentField(Subscription), default=[])
-  subscription_paused: bool = db.BooleanField(default=False)
-  pending_subscriptions: list[Subscription] = db.ListField(db.EmbeddedDocumentField(Subscription), default=[])
+  views: list[View] = db.ListField(db.ReferenceField(View), default=list)
+  subscriptions: list[Subscription] = db.EmbeddedDocumentListField(Subscription, default=list)
+  allocated_subscriptions: list[Subscription] = db.EmbeddedDocumentListField(Subscription, default=list)
+  pending_subscriptions: list[Subscription] = db.EmbeddedDocumentListField(Subscription, default=list)
   '''Subscriptions that are waiting for pause to end'''
-
+  subscription_paused: bool = db.BooleanField(default=False)
+  
   @property
   def view_time(self) -> timedelta:
     return timedelta(seconds=self._view_time)
@@ -37,6 +38,10 @@ class User(db.Document, UserMixin):
   def view_time(self, value: timedelta):
     '''The amount of time user can watch content'''
     self._view_time = value.total_seconds()
+  
+  @property
+  def last_view(self) -> View | None:
+    if self.views: return self.views[-1]
   
   @property
   def last_subscription(self) -> Subscription | None:
@@ -107,17 +112,18 @@ class User(db.Document, UserMixin):
       if atime: return atime
   
   def add_view(self, content: Content, view_time: timedelta, time: dt):
-    last_view: View | None = View.objects(
-      user=self, content=content).order_by('-time').first()
+    last_view = self.last_view
     
     if last_view and self.next_atime(last_view.time) > time:
       last_view.duration += view_time
       last_view.save()
     else:
-      View(
+      view = View(
         user=self, content=content,
         time=time, view_time=view_time
-      ).save()
+      )
+      self.views.append(view)
+      self.save()
     
     self.view_time -= view_time
     self.save()
