@@ -22,7 +22,7 @@ def user():
   return res
 
 
-@bl.post('/user')
+@bl.put('/user')
 @fresh_login_required
 def user_edit():
   username = request.json.get('username')
@@ -132,7 +132,7 @@ def send_reset_password_email():
   }
 
 
-@bl.post('/reset_password/')
+@bl.put('/reset_password')
 def reset_password():
   token = request.json.get('token')
   if not token: return abort(400, 'token is missing')

@@ -7,6 +7,7 @@ bl = Blueprint(
 )
 from .security import bl # register routes
 from .general import bl # continue register routes...
+from .money import bl
 from .doc import bl
 
 bl: Blueprint = bl
