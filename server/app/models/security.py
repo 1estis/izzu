@@ -123,7 +123,7 @@ class User(db.Document, UserMixin):
         time=time, view_time=view_time
       )
       self.views.append(view)
-      self.save()
+      view.save()
     
     self.view_time -= view_time
     self.save()
