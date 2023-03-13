@@ -18,12 +18,12 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-  GAR_LOCATION: us-central1 # TODO: update region of the Artifact Registry
-  GKE_CLUSTER: cluster-1    # TODO: update to cluster name
-  GKE_ZONE: us-central1-c   # TODO: update to cluster zone
-  DEPLOYMENT_NAME: gke-test # TODO: update to deployment name
-  REPOSITORY: samples # TODO: update to Artifact Registry docker repository
-  IMAGE: static-site
+  GAR_LOCATION: europe # region of the Artifact Registry
+  GKE_CLUSTER: autopilot-cluster-1 # cluster name
+  GKE_ZONE: europe-north1 # cluster zone
+  DEPLOYMENT_NAME: gke-test # deployment name
+  REPOSITORY: server # Artifact Registry docker repository
+  IMAGE: flask-server # docker image name
 
 jobs:
   setup-build-publish-deploy:
@@ -45,14 +45,8 @@ jobs:
       uses: 'google-github-actions/auth@v0'
       with:
         token_format: 'access_token'
-        workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
-        service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
-
-    # Alternative option - authentication via credentials json
-    # - id: 'auth'
-    #   uses: 'google-github-actions/auth@v0'
-    #   with:
-    #     credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+        workload_identity_provider: 'projects/838226452160/locations/global/workloadIdentityPools/workload-identity-pool/providers/workload-identity-provider'
+        service_account: 'github-actions@online-cinema-izzu.iam.gserviceaccount.com'
 
     - name: Docker configuration
       run: |-
