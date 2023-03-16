@@ -22,8 +22,8 @@ env:
   GKE_CLUSTER: autopilot-cluster-1 # cluster name
   GKE_ZONE: europe-north1 # cluster zone
   DEPLOYMENT_NAME: server # deployment name
-  REPOSITORY: server # Artifact Registry docker repository
-  IMAGE: flask-server # docker image name
+  REPOSITORY: izzu # Artifact Registry docker repository
+  IMAGE: server # docker image name
 
 jobs:
   setup-build-publish-deploy:
