@@ -34,7 +34,6 @@ def create_app(extra_config_settings={}):
   # Instantiate Flask
   app = Flask(__name__)
   app.config.from_object('app.settings')
-  app.config.from_object('app.local_settings')
   app.config.update(extra_config_settings)
   
   # Setup db Mongo

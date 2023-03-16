@@ -4,4 +4,3 @@ app.sqlite
 *.pyc
 env
 venv
-app/local_settings.py

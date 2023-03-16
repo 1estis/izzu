@@ -5,13 +5,13 @@ We assume that you have `python` and `virtualenv` installed.
 
 ```bash
 python -m venv env
-env/Scripts/Activate.ps1
 ```
 
 Only on windows:
 `pip install pyproject.toml`
 
 ```bash
+env/Scripts/Activate.ps1
 pip install -r requirements.txt
 ```
 

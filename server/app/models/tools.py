@@ -52,8 +52,8 @@ class Task(db.Document):
 class TitleManager:
   _title: str = db.StringField(max_length=255, required=True)
   _plural: str = db.StringField(max_length=255)
-  _titles: list[_types.Title] = db.EmbeddedDocumentListField(_types.Title, unique=True, default=list)
-  _plurals: list[_types.Title] = db.EmbeddedDocumentListField(_types.Title, unique=True, default=list)
+  _titles: list[_types.Title] = db.EmbeddedDocumentListField(_types.Title, default=list)
+  _plurals: list[_types.Title] = db.EmbeddedDocumentListField(_types.Title, default=list)
   plural_title: bool = False
   
   def title(self, language: dicts.Language | None = None, default: bool = True, plural: bool = False):
@@ -97,7 +97,7 @@ class TitleManager:
 
 
 class PosterManager:
-  _posters: list[_types.Poster] = db.EmbeddedDocumentListField(_types.Poster, unique=True, default=list)
+  _posters: list[_types.Poster] = db.EmbeddedDocumentListField(_types.Poster, default=list)
   
   def poster(self, language: dicts.Language | None = None) -> str:
     ln_code = language.code if language else DLC
@@ -136,7 +136,7 @@ class PosterManager:
 
 
 class DescriptionManager:
-  _descriptions: list[_types.Description] = db.EmbeddedDocumentListField(_types.Description, unique=True, default=list)
+  _descriptions: list[_types.Description] = db.EmbeddedDocumentListField(_types.Description, default=list)
   
   def description(self, language: dicts.Language | None = None) -> str:
     ln_code = language.code if language else DLC

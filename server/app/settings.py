@@ -4,6 +4,9 @@ import os
 # Place environment specific settings in env_settings.py
 # An example file (env_settings_example.py) can be used as a starting point
 
+# DO NOT use 'DEBUG = True' in production environments
+DEBUG = os.environ.get('DEBUG', True)
+
 # Application settings
 APP_NAME = 'IZZU'
 SITE_NAME = 'izzu.me'
@@ -28,25 +31,31 @@ WTF_CSRF_ENABLED = False
 # Flask-Mail settings
 
 MAIL_FROM_NAME = 'Izzu'
-MAIL_SERVER = 'smtp.gmail.com'
-MAIL_PORT = 587
-MAIL_USE_SSL = False
-MAIL_USE_TLS = True
+if DEBUG:
+  MAIL_SERVER = 'app.debugmail.io'
+  MAIL_PORT = 25
+  MAIL_USERNAME = 'a872ae73-d837-404a-b9f8-d5e2528eada1'
+  MAIL_PASSWORD = 'c8ddcbca-b77d-4d10-b0ed-becda31b43fd'
+  MAIL_FROM = 'john.doe@example.org'
+else:
+  MAIL_SERVER = os.environ.get('MAIL_SERVER')
+  MAIL_PORT = int(os.environ.get('MAIL_PORT'))
+  MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+  MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+  MAIL_FROM = os.environ.get('MAIL_FROM')
 
-# For local environment settings and secrets, create a file called local_settings.py
-# Optional settings:
+MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL', False)
+MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', True)
 
-# # DO NOT use 'DEBUG = True' in production environments
-# DEBUG = True
 
-# Required settings:
+# SECRETS
 
-# # Generate a safe one with: python -c 'import os; print(repr(os.urandom(24)));'
-# SECRET_KEY = 'DO_NOT_use_Unsecure_Secrets_in_production'
-# SECURITY_PASSWORD_SALT = 'DO_NOT_use_Unsecure_Secrets_in_production'
-# MAIL_USERNAME = 'MAIL_USERNAME'
-# MAIL_PASSWORD = 'MAIL_PASSWORD'
-# MAIL_FROM = 'MAIL_FROM'
+# Generate a safe one with: python -c 'import os; print(repr(os.urandom(24)));'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'DO_NOT_use_Unsecure_Secrets_in_production')
+SECURITY_PASSWORD_SALT = os.environ.get('SECURITY_PASSWORD_SALT', 'DO_NOT_use_Unsecure_Secrets_in_production')
+
+if (not DEBUG) and 'DO_NOT_use_Unsecure_Secrets_in_production' in [SECRET_KEY, SECURITY_PASSWORD_SALT]:
+  raise Exception('You must set SECRET_KEY and SECURITY_PASSWORD_SALT in production')
 
 # ADMINS = [
 #     '"Admin" <MAIL_USERNAME>',
