@@ -9,7 +9,7 @@ env/Scripts/Activate.ps1
 ```
 
 Only on windows:
-`pip install projected.toml`
+`pip install pyproject.toml`
 
 ```bash
 pip install -r requirements.txt
