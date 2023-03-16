@@ -34,7 +34,7 @@ spec:
             - name: PORT
               value: "5000"
           image: europe-docker.pkg.dev/online-cinema-izzu/izzu/server
-          name: europe-docker.pkg.dev/online-cinema-izzu/izzu/server
+          name: server
           ports:
             - containerPort: 5000
           resources: {}
