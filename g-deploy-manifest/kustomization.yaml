@@ -1,6 +1,6 @@
 resources:
-- .\mongo-claim0-persistentvolumeclaim.yaml
-- .\mongo-deployment.yaml
-- .\mongo-service.yaml
-- .\server-deployment.yaml
-- .\server-service.yaml
+- mongo-claim0-persistentvolumeclaim.yaml
+- mongo-deployment.yaml
+- mongo-service.yaml
+- server-deployment.yaml
+- server-service.yaml
