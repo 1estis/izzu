@@ -1,2 +1,2 @@
 resources:
-- ./kustomize
+- ./g-deploy-manifest
