@@ -4,3 +4,6 @@ resources:
 - mongo-service.yaml
 - server-deployment.yaml
 - server-service.yaml
+images:
+- name: server
+  newName: $IMAGE_ADDRESS

@@ -27,16 +27,21 @@ spec:
               value: mongodb://mongo
             - name: MONGODB_PORT
               value: "27017"
-            - name: MONGO_PASSWORD
-              value: password
-            - name: MONGO_USER
-              value: server
             - name: PORT
               value: "5000"
-          image: europe-docker.pkg.dev/online-cinema-izzu/izzu/server
+          image: server
           name: server
           ports:
             - containerPort: 5000
-          resources: {}
+          resources: {
+            limits: {
+              cpu: 500m,
+              memory: 512Mi
+            },
+            requests: {
+              cpu: 250m,
+              memory: 256Mi
+            }
+          }
       restartPolicy: Always
 status: {}
