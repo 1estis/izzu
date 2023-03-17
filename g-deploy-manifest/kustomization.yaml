@@ -6,4 +6,4 @@ resources:
 - server-service.yaml
 images:
 - name: server
-  newName: $(IMAGE_ADDRESS)
+  newName: ${IMAGE_ADDRESS}
