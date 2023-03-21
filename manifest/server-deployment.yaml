@@ -5,7 +5,7 @@ metadata:
     service: server
   name: server
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       service: server
@@ -38,4 +38,3 @@ spec:
             }
           }
       restartPolicy: Always
-status: {}

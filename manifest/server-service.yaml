@@ -2,8 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    service: server
-  name: server
+    service: server-service
+  name: server-service
 spec:
   ports:
     - name: "5000"
