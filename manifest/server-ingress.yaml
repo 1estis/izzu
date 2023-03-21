@@ -13,4 +13,8 @@ spec:
           service:
             name: server
             port:
-              name: "5000"
+              number: 5000
+  # tls:
+  # - hosts:
+  #   - izzu.me
+  #   secretName: izzu.me-tls
