@@ -11,7 +11,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: server-service
+            name: server-exposer
             port:
               number: 5000
   # tls:
