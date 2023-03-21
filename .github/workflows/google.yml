@@ -17,12 +17,12 @@ on:
     branches: [ "main" ]
 
 env:
-  PROJECT_ID: online-cinema-izzu
+  PROJECT_ID: suningarhus
   GAR_LOCATION: europe # region of the Artifact Registry
-  GKE_CLUSTER: autopilot-cluster-1 # cluster name
+  GKE_CLUSTER: autopilot # cluster name
   GKE_ZONE: europe-north1 # cluster zone
   DEPLOYMENT_NAME: server # deployment name
-  REPOSITORY: izzu # Artifact Registry docker repository
+  REPOSITORY: general # Artifact Registry docker repository
   IMAGE: server # docker image name
 
 jobs:
@@ -45,8 +45,8 @@ jobs:
       uses: 'google-github-actions/auth@v0'
       with:
         token_format: 'access_token'
-        workload_identity_provider: 'projects/838226452160/locations/global/workloadIdentityPools/workload-identity-pool/providers/workload-identity-provider'
-        service_account: 'github-actions@online-cinema-izzu.iam.gserviceaccount.com'
+        workload_identity_provider: 'projects/817460579945/locations/global/workloadIdentityPools/pool/providers/provider'
+        service_account: 'github-actions@$PROJECT_ID.iam.gserviceaccount.com'
 
     - name: Docker configuration
       run: |-
