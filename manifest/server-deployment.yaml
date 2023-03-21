@@ -1,25 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    kompose.cmd: C:\Users\kulay\Git\izzu\kompose.exe convert
-    kompose.version: 1.26.0 (40646f47)
   labels:
-    io.kompose.service: server
+    service: server
   name: server
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
-      io.kompose.service: server
+      service: server
   strategy: {}
   template:
     metadata:
-      annotations:
-        kompose.cmd: C:\Users\kulay\Git\izzu\kompose.exe convert
-        kompose.version: 1.26.0 (40646f47)
       labels:
-        io.kompose.service: server
+        service: server
     spec:
       containers:
         - env:
@@ -37,10 +31,10 @@ spec:
             limits: {
               cpu: 500m,
               memory: 512Mi
-            },
-            requests: {
-              cpu: 250m,
-              memory: 256Mi
+            # },
+            # requests: {
+            #   cpu: 250m,
+            #   memory: 256Mi
             }
           }
       restartPolicy: Always

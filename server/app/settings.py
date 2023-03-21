@@ -8,8 +8,8 @@ import os
 DEBUG = os.environ.get('DEBUG', True)
 
 # Application settings
-APP_NAME = 'IZZU'
-SITE_NAME = 'izzu.me'
+APP_NAME = 'Suningarhus'
+SITE_NAME = 'suningarhus.com'
 SERVER_NAME = os.environ.get('SERVER_NAME')
 APP_SYSTEM_ERROR_SUBJECT_LINE = APP_NAME + ' system error'
 
@@ -17,7 +17,7 @@ COOKIE_SECURE = 'Secure'
 COOKIE_DURATION = timedelta(days=365)
 
 # MongoDB Config
-MONGODB_DB = os.environ.get('MONGODB_DB', 'app')
+MONGODB_DB = os.environ.get('MONGODB_DB', 'server')
 MONGODB_HOST = os.environ.get('MONGODB_HOST', 'localhost')
 MONGODB_PORT = int(os.environ.get('MONGODB_PORT', 27017))
 

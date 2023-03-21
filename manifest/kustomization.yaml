@@ -1,5 +1,5 @@
 resources:
-- mongo-claim0-persistentvolumeclaim.yaml
+- mongo-claim.yaml
 - mongo-deployment.yaml
 - mongo-service.yaml
 - server-deployment.yaml

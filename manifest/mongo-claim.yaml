@@ -2,8 +2,8 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   labels:
-    io.kompose.service: mongo-claim0
-  name: mongo-claim0
+    service: mongo-claim
+  name: mongo-claim
 spec:
   accessModes:
     - ReadWriteOnce
