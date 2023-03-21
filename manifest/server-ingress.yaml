@@ -1,6 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  labels:
+    service: server-ingress
   name: server-ingress
 spec:
   rules:
@@ -11,9 +13,9 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: server-exposer
+            name: server
             port:
-              number: 5000
+              name: "5000"
   # tls:
   # - hosts:
   #   - izzu.me
