@@ -20,8 +20,8 @@ spec:
         - env:
             - name: MONGO_INITDB_ROOT_HOST
               value: localhost
-            # - name: MONGO_INITDB_DATABASE
-            #   value: server
+            - name: MONGO_INITDB_DATABASE
+              value: server
           image: mongo
           name: mongo
           ports:

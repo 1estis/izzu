@@ -17,7 +17,7 @@ on:
     branches: [ "main" ]
 
 env:
-  PROJECT_ID: suningarhus
+  PROJECT_ID: lindria
   GAR_LOCATION: europe # region of the Artifact Registry
   GKE_CLUSTER: autopilot # cluster name
   GKE_ZONE: europe-north1 # cluster zone
@@ -45,7 +45,7 @@ jobs:
       uses: 'google-github-actions/auth@v0'
       with:
         token_format: 'access_token'
-        workload_identity_provider: 'projects/817460579945/locations/global/workloadIdentityPools/pool/providers/provider'
+        workload_identity_provider: 'projects/591367483723/locations/global/workloadIdentityPools/pool/providers/provider'
         service_account: 'github-actions@${{ env.PROJECT_ID }}.iam.gserviceaccount.com'
 
     - name: Docker configuration

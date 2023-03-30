@@ -8,8 +8,8 @@ import os
 DEBUG = os.environ.get('DEBUG', True)
 
 # Application settings
-APP_NAME = 'Suningarhus'
-SITE_NAME = 'suningarhus.com'
+APP_NAME = 'Lindria'
+SITE_NAME = 'lindria.com'
 SERVER_NAME = os.environ.get('SERVER_NAME')
 APP_SYSTEM_ERROR_SUBJECT_LINE = APP_NAME + ' system error'
 
