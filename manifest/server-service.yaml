@@ -11,5 +11,6 @@ spec:
       targetPort: 5000
   selector:
     service: server
+  type: NodePort
 status:
   loadBalancer: {}
