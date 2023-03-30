@@ -10,7 +10,6 @@ spec:
     service:
       name: server-service
       port:
-        name: "5000"
         number: 5000
   rules:
   - http:
@@ -20,7 +19,6 @@ spec:
           service:
             name: server-service
             port:
-              name: "5000"
               number: 5000
         pathType: ImplementationSpecific
     host: izzu.me
