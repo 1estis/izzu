@@ -4,19 +4,23 @@ metadata:
   labels:
     service: server-ingress
   name: server-ingress
+  namespace: default
 spec:
+  defaultBackend:
+    service:
+      name: server-service
+      port:
+        name: "5000"
+        number: 5000
   rules:
-  - host: izzu.me
-    http:
+  - http:
       paths:
-      - path: /
-        pathType: Prefix
+      - path: /*
         backend:
           service:
             name: server-service
             port:
+              name: "5000"
               number: 5000
-  # tls:
-  # - hosts:
-  #   - izzu.me
-  #   secretName: izzu.me-tls
+        pathType: ImplementationSpecific
+    host: izzu.me
