@@ -11,6 +11,3 @@ spec:
       targetPort: 5000
   selector:
     service: server
-  type: LoadBalancer
-  externalIPs:
-    - 34.88.87.125
