@@ -19,4 +19,4 @@ spec:
     service: server
   sessionAffinity: None
   type: LoadBalancer
-  loadBalancerIP: izzu.me
+  loadBalancerIP: 34.88.87.125
