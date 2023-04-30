@@ -12,13 +12,4 @@ spec:
       port:
         number: 5000
   rules:
-  - http:
-      paths:
-      - path: /*
-        backend:
-          service:
-            name: server-service
-            port:
-              number: 5000
-        pathType: ImplementationSpecific
-    host: izzu.me
+  - host: izzu.me
