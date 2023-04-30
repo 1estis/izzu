@@ -5,4 +5,3 @@ resources:
 - server-deployment.yaml
 - server-service.yaml
 - server-exposer.yaml
-- server-ingress.yaml
