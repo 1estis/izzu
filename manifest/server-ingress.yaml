@@ -6,6 +6,7 @@ metadata:
   namespace: "default"
   annotations:
     networking.gke.io/managed-certificates: "lindria-ssl"
+    nginx.ingress.kubernetes.io/health-check-path: /healthz
 spec:
   defaultBackend:
     service:
