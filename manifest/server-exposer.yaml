@@ -5,18 +5,11 @@ metadata:
     service: server-exposer
   name: server-exposer
 spec:
-  allocateLoadBalancerNodePorts: true
-  externalTrafficPolicy: Cluster
-  internalTrafficPolicy: Cluster
-  ipFamilies:
-  - IPv4
-  ipFamilyPolicy: SingleStack
   ports:
   - port: 80
     protocol: TCP
     targetPort: 5000
   selector:
     service: server
-  sessionAffinity: None
   type: LoadBalancer
-  loadBalancerIP: 34.88.87.125
+  loadBalancerIP: 34.88.87.125 # TODO: Make it a secret
