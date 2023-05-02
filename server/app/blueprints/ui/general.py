@@ -2,7 +2,7 @@ from flask import render_template_string
 from . import bl, style
 
 
-@bl.get('/')
+@bl.get('')
 def home():
   return render_template_string(
     f'{style}'

@@ -1,4 +1,4 @@
-from flask import redirect, send_from_directory, url_for
+from flask import send_from_directory, render_template_string, current_app as app
 from . import bl
 
 
@@ -14,4 +14,7 @@ def healthz():
 
 @bl.route('/')
 def home():
-  return redirect(url_for('ui.home'))
+  return render_template_string(
+    '<h1>{{ app.config.APP_NAME }}</h1>'
+    '<p>Visit <a href="/ui">/ui</a> for the simple UI</p>'
+  )
