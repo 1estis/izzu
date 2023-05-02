@@ -2,7 +2,7 @@ from flask import render_template_string
 from . import bl, style
 
 
-@bl.route('/money')
+@bl.route('/ui/money')
 def money():
   return render_template_string(
     f'{style}'

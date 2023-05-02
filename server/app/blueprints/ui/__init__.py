@@ -41,7 +41,7 @@ style: str = '''
 
 bl = Blueprint(
   'ui', __name__, static_url_path='/static', static_folder='static',
-  template_folder='templates', url_prefix='/ui'
+  template_folder='templates'
 )
 from .security import bl
 from .general import bl

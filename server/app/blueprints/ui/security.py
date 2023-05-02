@@ -2,7 +2,7 @@ from flask import render_template_string, current_app as app
 from . import bl, style
 
 
-@bl.route('/security')
+@bl.route('/ui/security')
 def security():
   return render_template_string(
     f'{style}'
@@ -124,7 +124,7 @@ def security():
   )
 
 
-@bl.route('/security/confirm_email/<token>')
+@bl.route('/ui/security/confirm_email/<token>')
 def confirm_email(token):
   return render_template_string(
     f'{style}'
@@ -159,7 +159,7 @@ def confirm_email(token):
   )
 
 
-@bl.route('/security/reset_password/<token>')
+@bl.route('/ui/security/reset_password/<token>')
 def reset_password(token):
   return render_template_string(
     f'{style}'
