@@ -7,6 +7,11 @@ def favicon():
   return send_from_directory('static', 'favicon.ico')
 
 
+@bl.route('/healthz')
+def healthz():
+  return 'OK'
+
+
 @bl.route('/')
 def home():
   return redirect(url_for('ui.home'))
