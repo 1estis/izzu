@@ -15,6 +15,6 @@ def healthz():
 @bl.route('/')
 def home():
   return render_template_string(
-    f'<h1>{ app.config.APP_NAME }</h1>'
+    f'''<h1>{ app.config['APP_NAME'] }</h1>'''
     '<p>Visit <a href="/ui">/ui</a> for the simple UI</p>'
   )
