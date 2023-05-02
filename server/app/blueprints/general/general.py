@@ -12,7 +12,7 @@ def healthz():
   return 'OK'
 
 
-@bl.route('/')
+@bl.get('/')
 def home():
   return render_template_string(
     f'''<h1>{ app.config['APP_NAME'] }</h1>'''
