@@ -10,11 +10,3 @@ def favicon():
 @bl.route('/healthz')
 def healthz():
   return 'OK'
-
-
-@bl.get('/')
-def home():
-  return render_template_string(
-    f'''<h1>{ app.config['APP_NAME'] }</h1>'''
-    '<p>Visit <a href="/ui">/ui</a> for the simple UI</p>'
-  )
