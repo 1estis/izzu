@@ -5,9 +5,20 @@ metadata:
   name: "server-ingress"
   namespace: "default"
   annotations:
-    networking.gke.io/managed-certificates: "lindria-ssl"
-    nginx.ingress.kubernetes.io/health-check-path: /healthz
     kubernetes.io/ingress.global-static-ip-name: "lindria-server-ip"
+    networking.gke.io/managed-certificates: "lindria.com, api.lindria.com"
+    networking.gke.io/health-checks: >-
+      [
+        {
+          "path": "/healthz",
+          "port": 5000,
+          "initialDelaySeconds": 300,
+          "periodSeconds": 30,
+          "timeoutSeconds": 5,
+          "unhealthyThresholdCount": 3,
+          "healthyThresholdCount": 3
+        }
+      ]
 spec:
   defaultBackend:
     service:
