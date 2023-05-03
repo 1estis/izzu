@@ -18,3 +18,6 @@ spec:
     http:
       paths:
       - path: /
+        backend:
+          serviceName: "server-service"
+          servicePort: 5000
