@@ -7,20 +7,10 @@ metadata:
   annotations:
     networking.gke.io/managed-certificates: "lindria-ssl"
     nginx.ingress.kubernetes.io/health-check-path: /healthz
+    kubernetes.io/ingress.global-static-ip-name: "lindria-server-ip"
 spec:
   defaultBackend:
     service:
       name: "server-service"
       port:
         number: 5000
-  rules:
-  - host: lindria.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: "server-service"
-            port:
-              number: 5000
