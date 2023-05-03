@@ -15,6 +15,6 @@ spec:
         number: 5000
   rules:
   - host: lindria.com
-    https:
+    http:
       paths:
       - path: /
