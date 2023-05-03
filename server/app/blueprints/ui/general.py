@@ -6,7 +6,7 @@ from . import bl, style
 def home():
   return render_template_string(
     f'{style}'
-    f'<h1>Welcome to the {app.config["APP_NAME"]} simple UI</h1>'
+    f'<h1>Welcome to the {app.config["APP_NAME"]} API simple UI</h1>'
     '<a href=\'{{ url_for(\'ui.security\') }}\'>Security</a>'
     '<a href=\'{{ url_for(\'ui.money\') }}\'>Money</a>'
   )

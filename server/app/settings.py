@@ -30,7 +30,7 @@ WTF_CSRF_ENABLED = False
 
 # Flask-Mail settings
 
-MAIL_FROM_NAME = 'Izzu'
+MAIL_FROM_NAME = APP_NAME
 if DEBUG:
   MAIL_SERVER = 'app.debugmail.io'
   MAIL_PORT = 25
