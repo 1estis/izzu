@@ -24,7 +24,6 @@ db: mongoengine = MongoEngine()
 mail = Mail()
 migrate = Migrate()
 security = Security()
-sslify = SSLify()
 
 from .models import User, Role
 user_datastore = MongoEngineUserDatastore(db, User, Role)
@@ -38,11 +37,12 @@ def create_app(extra_config_settings={}):
   app.config.from_object('app.settings')
   app.config.update(extra_config_settings)
   
+  # Setup SSL redirect
+  if not app.config['SSL_DISABLE']:
+    sslify = SSLify(app)
+  
   # Setup db Mongo
   db.init_app(app)
-  
-  # Setup Flask-SSLify
-  sslify.init_app(app)
   
   # Register blueprints
   from app.blueprints.general import bl
