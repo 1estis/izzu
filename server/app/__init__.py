@@ -79,7 +79,7 @@ def init_email_error_handler(app: Flask):
   # Retrieve email settings from app.config
   host = app.config['MAIL_SERVER']
   port = app.config['MAIL_PORT']
-  from_addr = app.config['MAIL_DEFAULT_SENDER']
+  from_addr = app.config['MAIL_FROM']
   username = app.config['MAIL_USERNAME']
   password = app.config['MAIL_PASSWORD']
   secure = () if app.config.get('MAIL_USE_TLS') else None
