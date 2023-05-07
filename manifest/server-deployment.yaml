@@ -33,8 +33,8 @@ spec:
               memory: 128Mi
             },
             limits: {
-              cpu: 100m,
-              memory: 256Mi
+              cpu: 5000m,
+              memory: 4Gi
             }
           }
       restartPolicy: Always
