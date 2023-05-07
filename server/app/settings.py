@@ -52,6 +52,6 @@ SECURITY_PASSWORD_SALT = os.environ.get('SECURITY_PASSWORD_SALT', 'DO_NOT_use_Un
 if (not DEBUG) and 'DO_NOT_use_Unsecure_Secrets_in_production' in [SECRET_KEY, SECURITY_PASSWORD_SALT]:
   raise Exception('You must set SECRET_KEY and SECURITY_PASSWORD_SALT in production')
 
-# ADMINS = [
-#     '"Admin" <MAIL_USERNAME>',
-# ]
+ADMINS = [
+    '"Estis" estis@irminta.com',
+]
