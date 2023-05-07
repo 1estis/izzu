@@ -5,8 +5,8 @@ import os
 # An example file (env_settings_example.py) can be used as a starting point
 
 # DO NOT use 'DEBUG = True' in production environments
-ENV = os.environ.get('ENV', 'None')
-DEBUG = os.environ.get('DEBUG', ENV in ['development', 'staging', 'test', 'None'])
+ENV = os.environ.get('ENV', None)
+DEBUG = os.environ.get('DEBUG', ENV in ['development', 'staging', 'test', None])
 
 # Application settings
 APP_NAME = 'Lindria'

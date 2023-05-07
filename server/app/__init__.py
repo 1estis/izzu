@@ -39,6 +39,7 @@ def create_app(extra_config_settings={}):
   
   # Setup SSL redirect
   sslify = SSLify(app)
+  sslify.init_app(app)
   
   # Setup db Mongo
   db.init_app(app)
