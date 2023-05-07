@@ -5,7 +5,8 @@ import os
 # An example file (env_settings_example.py) can be used as a starting point
 
 # DO NOT use 'DEBUG = True' in production environments
-DEBUG = os.environ.get('DEBUG', True)
+ENV = os.environ.get('ENV', 'None')
+DEBUG = os.environ.get('DEBUG', ENV in ['development', 'staging', 'test', 'None'])
 
 # Application settings
 APP_NAME = 'Lindria'
@@ -15,8 +16,6 @@ APP_SYSTEM_ERROR_SUBJECT_LINE = APP_NAME + ' system error'
 
 COOKIE_SECURE = 'Secure'
 COOKIE_DURATION = timedelta(days=365)
-
-SSL_REDIRECT = os.environ.get('SSL_REDIRECT', not DEBUG)
 
 # MongoDB Config
 MONGODB_DB = os.environ.get('MONGODB_DB', 'server')
