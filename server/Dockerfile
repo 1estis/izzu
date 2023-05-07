@@ -1,5 +1,7 @@
 FROM python:latest
 
+ENV ENV=$ENV
+
 RUN pip install gunicorn
 
 COPY requirements.txt requirements.txt
