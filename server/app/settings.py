@@ -32,19 +32,12 @@ WTF_CSRF_ENABLED = False
 # Flask-Mail settings
 
 MAIL_FROM_NAME = APP_NAME
-MAIL_DEBUG = os.environ.get('MAIL_DEBUG', DEBUG)
-if DEBUG:
-  MAIL_SERVER = 'app.debugmail.io'
-  MAIL_PORT = 25
-  MAIL_USERNAME = 'a872ae73-d837-404a-b9f8-d5e2528eada1'
-  MAIL_PASSWORD = 'c8ddcbca-b77d-4d10-b0ed-becda31b43fd'
-  MAIL_FROM = 'john.doe@example.org'
-else:
-  MAIL_SERVER = os.environ.get('MAIL_SERVER')
-  MAIL_PORT = int(os.environ.get('MAIL_PORT'))
-  MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
-  MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-  MAIL_FROM = os.environ.get('MAIL_FROM')
+
+MAIL_SERVER = os.environ.get('MAIL_SERVER', 'app.debugmail.io')
+MAIL_PORT = int(os.environ.get('MAIL_PORT', 25))
+MAIL_USERNAME = os.environ.get('MAIL_USERNAME', 'a872ae73-d837-404a-b9f8-d5e2528eada1')
+MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD', 'c8ddcbca-b77d-4d10-b0ed-becda31b43fd')
+MAIL_FROM = os.environ.get('MAIL_FROM', 'john.doe@example.org')
 
 MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL', False)
 MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', True)
