@@ -3,7 +3,6 @@ from fractions import Fraction
 import mongoengine
 from flask import Flask
 from flask_mailing import Mail
-from flask_migrate import Migrate
 from flask_mongoengine import MongoEngine
 from flask_security import MongoEngineUserDatastore, Security
 from flask_sslify import SSLify
@@ -22,7 +21,6 @@ SERVICE_FEE = Fraction(3, 10)
 # Instantiate Flask extensions
 db: mongoengine = MongoEngine()
 mail = Mail()
-migrate = Migrate()
 security = Security()
 
 from .models import User, Role

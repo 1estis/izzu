@@ -3,7 +3,10 @@ flask
 flask_security
 flask_login
 flask_mailing
-flask_migrate
 flask_mongoengine
 flask_sslify
 mongoengine
+# For flask < 2.3.0
+pytz
+# Instrunents
+pip_tools

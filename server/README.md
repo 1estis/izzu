@@ -19,7 +19,7 @@ pip install -r requirements.txt
 
 ```bash
 pip install pip-tools
-pip-compile
+pip-compile --resolver=backtracking
 pip install -r requirements.txt
 ```
 
