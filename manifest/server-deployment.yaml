@@ -36,10 +36,4 @@ spec:
               memory: 4Gi
             }
           }
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 5000
-            initialDelaySeconds: 5
-            periodSeconds: 10
       restartPolicy: Always
