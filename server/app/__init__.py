@@ -38,7 +38,7 @@ def create_app(extra_config_settings={}):
   app.config.update(extra_config_settings)
   
   # Setup SSL redirect
-  if not app.config['SSL_DISABLE']:
+  if app.config['SSL_REDIRECT']:
     sslify = SSLify(app)
   
   # Setup db Mongo
