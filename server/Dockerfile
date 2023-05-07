@@ -1,6 +1,6 @@
 FROM python:latest
 
-ENV ENV=$ENV
+ENV ENV=${ENV}
 
 RUN pip install gunicorn
 
