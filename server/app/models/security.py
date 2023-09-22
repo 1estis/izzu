@@ -16,17 +16,18 @@ class Role(db.Document, RoleMixin):
 
 
 class User(db.Document, UserMixin):
+  fs_uniquifier: str = db.StringField(max_length=255, required=True, unique=True)
   active: bool = db.BooleanField(default=True)
   username: str = db.StringField(max_length=80, required=True)
   email: str = db.StringField(max_length=255, required=True, unique=True)
   password: str = db.StringField(max_length=255, required=True)
-  roles: list = db.ListField(db.ReferenceField(Role), default=list)
+  roles: list = db.ListField(field=db.ReferenceField(document_type=Role), default=list)
   confirmed: dt | None = db.DateTimeField(default=None)
   _view_time: float = db.FloatField(required=True, default=0)
-  views: list[View] = db.ListField(db.ReferenceField(View), default=list)
-  subscriptions: list[Subscription] = db.EmbeddedDocumentListField(Subscription, default=list)
-  allocated_subscriptions: list[Subscription] = db.EmbeddedDocumentListField(Subscription, default=list)
-  pending_subscriptions: list[Subscription] = db.EmbeddedDocumentListField(Subscription, default=list)
+  views: list[View] = db.ListField(field=db.ReferenceField(document_type=View), default=list)
+  subscriptions: list[Subscription] = db.EmbeddedDocumentListField(document_type=Subscription, default=list)
+  allocated_subscriptions: list[Subscription] = db.EmbeddedDocumentListField(document_type=Subscription, default=list)
+  pending_subscriptions: list[Subscription] = db.EmbeddedDocumentListField(document_type=Subscription, default=list)
   '''Subscriptions that are waiting for pause to end'''
   subscription_paused: bool = db.BooleanField(default=False)
   

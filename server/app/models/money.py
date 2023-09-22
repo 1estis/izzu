@@ -10,7 +10,7 @@ from .dicts import Currency
 
 
 class Payment(db.EmbeddedDocument):
-  currency: Currency = db.ReferenceField(Currency, required=True)
+  currency: Currency = db.ReferenceField(document_type=Currency, required=True)
   numerator: int = db.IntField(required=True)
   denominator: int = db.IntField(required=True)
   time: dt = db.DateTimeField(required=True)
@@ -128,10 +128,10 @@ class SubscriptionFragment(db.EmbeddedDocument):
 class Subscription(db.EmbeddedDocument):
   '''Subscription model. Call calculate_fragments() once after creating a new subscription.'''
   id: int = db.SequenceField(primary_key=True)
-  payment: Payment = db.EmbeddedDocumentField(Payment, required=True)
+  payment: Payment = db.EmbeddedDocumentField(document_type=Payment, required=True)
   start: dt = db.DateTimeField(required=True)
   end: dt = db.DateTimeField(required=True)
-  fragments: list[SubscriptionFragment] = db.EmbeddedDocumentListField(SubscriptionFragment, required=True, default=list)
+  fragments: list[SubscriptionFragment] = db.EmbeddedDocumentListField(document_type=SubscriptionFragment, required=True, default=list)
   
   def allocate_next_fragment(self) -> None:
     '''Allocate next fragment of subscription'''
@@ -249,7 +249,7 @@ class Subscription(db.EmbeddedDocument):
 
 
 class Allocate(Task):
-  user: sec.User = db.ReferenceField('sec.User', required=True)
+  user: sec.User = db.ReferenceField(document_type='sec.User', required=True)
   
   def do(self) -> None:
     self.user.allocate_next_fragment()

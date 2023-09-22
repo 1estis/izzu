@@ -28,6 +28,7 @@ pip install -r requirements.txt
 Start the mongoDB server
 
 ```bash
+cd test
 docker-compose up mongo
 ```
 

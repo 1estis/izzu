@@ -8,8 +8,8 @@ from ._types import CurrencyAmount
 
 class Mediafile(db.EmbeddedDocument):
   # size: int = db.IntField(required=True)
-  language: Language = db.ReferenceField(Language, required=True)
-  # genres: list[Genre] = db.EmbeddedDocumentListField(Genre, default=list)
+  language: Language = db.ReferenceField(document_type=Language, required=True)
+  # genres: list[Genre] = db.EmbeddedDocumentListField(document_type=Genre, default=list)
   # duration: int = db.IntField()
   # resolution: str = db.StringField(max_length=255)
 
@@ -18,11 +18,11 @@ class Content(db.Document, TitleManager, PosterManager, DescriptionManager):
   meta = {'allow_inheritance': True, 'ordering': ['-added_date'],
   'indexes': ['code', 'type', 'release_date', 'added_date'], }
   code: str = db.StringField(max_length=255, primary_key=True, required=True)
-  type: ContentType = db.ReferenceField(ContentType, required=True)
+  type: ContentType = db.ReferenceField(document_type=ContentType, required=True)
   release_date: date = db.DateField()
-  royalty_amounts: list[CurrencyAmount] = db.EmbeddedDocumentListField(CurrencyAmount, default=list)
+  royalty_amounts: list[CurrencyAmount] = db.EmbeddedDocumentListField(document_type=CurrencyAmount, default=list)
   added_date: dt = db.DateTimeField(default=dt.utcnow, required=True)
-  original_language: Language = db.ReferenceField(Language, required=True)
+  original_language: Language = db.ReferenceField(document_type=Language, required=True)
   _code_pattern: str = r'^[a-z-0-9]+$'
   
   def royalty_amount(self, currency: Currency):
@@ -60,16 +60,16 @@ class Movie(Content, MediafileManager): pass
 class Episode(db.EmbeddedDocument, MediafileManager, DescriptionManager, TitleManager):
   number: int = db.IntField(primary_key=True)
   release_date: dt = db.DateTimeField(required=True)
-  original_language: Language = db.ReferenceField(Language, required=True)
+  original_language: Language = db.ReferenceField(document_type=Language, required=True)
 
 
 class Season(db.EmbeddedDocument, DescriptionManager, TitleManager):
   number: int = db.IntField(primary_key=True)
-  episodes: list[Episode] = db.EmbeddedDocumentListField(Episode, default=list)
+  episodes: list[Episode] = db.EmbeddedDocumentListField(document_type=Episode, default=list)
 
 
 class Series(Content):
-  seasons: list[Season] = db.EmbeddedDocumentListField(Season, default=list)
+  seasons: list[Season] = db.EmbeddedDocumentListField(document_type=Season, default=list)
 
 
 class File(db.Document):

@@ -5,7 +5,7 @@ from flask import Flask
 from flask_mailing import Mail
 from flask_mongoengine import MongoEngine
 from flask_security import MongoEngineUserDatastore, Security
-from flask_sslify import SSLify
+# from flask_sslify import SSLify
 
 
 DLC = 'en_US'
@@ -36,7 +36,8 @@ def create_app(extra_config_settings={}):
   app.config.update(extra_config_settings)
   
   # Setup SSL redirect
-  _ = SSLify(app, permanent=True, skips=['healthz'])
+  # if app.config.get('SSLIFY'):
+  #   _ = SSLify(app, permanent=True, skips=['healthz'])
   
   # Setup db Mongo
   db.init_app(app)
@@ -59,6 +60,8 @@ def create_app(extra_config_settings={}):
   
   # Setup Flask-Mail
   mail.init_app(app)
+  from app.blueprints.api.general import init
+  init()
   
   # Setup an error-logger to send emails to app.config.ADMINS
   init_email_error_handler(app)

@@ -9,7 +9,7 @@ from .content import Content
 
 class Weight(db.EmbeddedDocument):
   id: int = db.SequenceField(primary_key=True)
-  unit: Content = db.ReferenceField(Content, required=True)
+  unit: Content = db.ReferenceField(document_type=Content, required=True)
   numerator: int = db.IntField(required=True, min_value=1, max_value=999_999)
   denominator: int = db.IntField(required=True, min_value=1, max_value=999_999)
   
@@ -33,9 +33,9 @@ class Weights(db.Document):
   :param user: user
   :param time: time of weights
   :param weights: weights of content'''
-  user: sec.User = db.ReferenceField('sec.User', required=True)
+  user: sec.User = db.ReferenceField(document_type='sec.User', required=True)
   time: dt = db.DateTimeField(required=True, default=dt.now)
-  weights: list[Weight] = db.EmbeddedDocumentListField(Weight, required=True, default=list)
+  weights: list[Weight] = db.EmbeddedDocumentListField(document_type=Weight, required=True, default=list)
   
   def save(self, *args, **values):
     # ignore weights with zero value or if user has not viewed content in allocation time
@@ -48,8 +48,8 @@ class Weights(db.Document):
 
 
 class View(db.Document):
-  user: sec.User = db.ReferenceField('sec.User', required=True)
-  content: Content = db.ReferenceField(Content, required=True)
+  user: sec.User = db.ReferenceField(document_type='sec.User', required=True)
+  content: Content = db.ReferenceField(document_type=Content, required=True)
   time: dt = db.DateTimeField(required=True)
   _view_time: float = db.FloatField(required=True)
   
@@ -64,7 +64,7 @@ class View(db.Document):
 
 class Royalty(db.EmbeddedDocument):
   id: int = db.SequenceField(primary_key=True)
-  content: Content = db.ReferenceField(Content, required=True)
+  content: Content = db.ReferenceField(document_type=Content, required=True)
   amount_numerator: int = db.IntField(required=True)
   amount_denominator: int = db.IntField(required=True)
   _view_time: float = db.FloatField(required=True)
@@ -88,15 +88,15 @@ class Royalty(db.EmbeddedDocument):
 
 class Allocation(db.Document):
   id: int = db.SequenceField(primary_key=True)
-  user: sec.User = db.ReferenceField('sec.User', required=True)
+  user: sec.User = db.ReferenceField(document_type='sec.User', required=True)
   time: dt = db.DateTimeField(required=True)
   '''Time, when allocation was executed'''
   amount_numerator: int = db.IntField(required=True)
   amount_denominator: int = db.IntField(required=True)
-  currency = db.ReferenceField(Currency, required=True)
+  currency = db.ReferenceField(document_type=Currency, required=True)
   allocation_area_start: dt = db.DateTimeField(required=True)
   allocation_area_end: dt = db.DateTimeField(required=True)
-  royaltys: list[Royalty] = db.EmbeddedDocumentListField(Royalty)
+  royaltys: list[Royalty] = db.EmbeddedDocumentListField(document_type=Royalty)
   
   @property
   def amount(self) -> Fraction:

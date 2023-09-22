@@ -11,9 +11,8 @@ from app.models.content import ContentType
 from app.models.dicts import Language
 
 
-@bl.before_app_first_request
 def init():
-  if not user_datastore.get_user('admin@self.com'):
+  if not user_datastore.find_user(email='admin@self.com'):
     user_datastore.create_role(name="admin")
     user_datastore.create_user(
       username='admin',

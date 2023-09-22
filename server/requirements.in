@@ -1,12 +1,14 @@
 dataclasses
 flask
-flask_security
+flask_security_too
 flask_login
 flask_mailing
-flask_mongoengine
 flask_sslify
 mongoengine
+bcrypt
+# flask_mongoengine for flask > 2.3.x
+flask_me
 # For flask < 2.3.0
-pytz
-# Instrunents
+# pytz
+# Instruments
 pip_tools

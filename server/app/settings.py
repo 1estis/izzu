@@ -16,6 +16,8 @@ APP_SYSTEM_ERROR_SUBJECT_LINE = APP_NAME + ' system error'
 
 COOKIE_SECURE = 'Secure'
 COOKIE_DURATION = timedelta(days=365)
+# SSLIFY = not DEBUG
+SSLIFY = True
 
 # MongoDB Config
 MONGODB_DB = os.environ.get('MONGODB_DB', 'server')

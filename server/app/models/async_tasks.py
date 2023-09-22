@@ -17,7 +17,7 @@ def generate_code(length: int = 64) -> str:
 class ConfirmEmail(Task):
   '''Confirmation email for user.'''
   token: str = db.StringField(required=True, default=generate_code)
-  user: User = db.ReferenceField(User, required=True)
+  user: User = db.ReferenceField(document_type=User, required=True)
   meta = {'indexes': ['token']}
   
   def do(self):
@@ -56,7 +56,7 @@ class ConfirmEmail(Task):
 class ResetPassword(Task):
   '''Reset password task.'''
   token: str = db.StringField(required=True)
-  user: User = db.ReferenceField(User, required=True)
+  user: User = db.ReferenceField(document_type=User, required=True)
   meta = {'indexes': ['token']}
   
   def do(self):
