@@ -61,7 +61,8 @@ def create_app(extra_config_settings={}):
   # Setup Flask-Mail
   mail.init_app(app)
   from app.blueprints.api.general import init
-  init()
+  with app.app_context():
+    init()
   
   # Setup an error-logger to send emails to app.config.ADMINS
   init_email_error_handler(app)
