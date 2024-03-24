@@ -1,6 +1,6 @@
 from datetime import timedelta
 from fractions import Fraction
-import mongoengine
+import mongoengine as me
 from flask import Flask
 from flask_mailing import Mail
 from flask_mongoengine import MongoEngine
@@ -19,12 +19,13 @@ Royalty allocation area = RAR + subscription duration + RAR'''
 SERVICE_FEE = Fraction(3, 10)
 
 # Instantiate Flask extensions
-db: mongoengine = MongoEngine()
+flask_db = MongoEngine()
+db: me = flask_db
 mail = Mail()
 security = Security()
 
 from .models import User, Role
-user_datastore = MongoEngineUserDatastore(db, User, Role)
+user_datastore = MongoEngineUserDatastore(flask_db, User, Role)
 
 
 def create_app(extra_config_settings={}):
@@ -37,10 +38,10 @@ def create_app(extra_config_settings={}):
   
   # Setup SSL redirect
   if app.config.get('SSLIFY', False):
-    _ = SSLify(app, permanent=True, skips=['healthz'])
+    SSLify(app, permanent=True, skips=['healthz'])
   
   # Setup db Mongo
-  db.init_app(app)
+  flask_db.init_app(app)
   
   # Register blueprints
   from app.blueprints.general import bl
@@ -51,8 +52,7 @@ def create_app(extra_config_settings={}):
   app.register_blueprint(bl)
   
   # Setup Flask-secure
-  app.user_datastore: MongoEngineUserDatastore = user_datastore
-  security.init_app(app, app.user_datastore)
+  security.init_app(app, user_datastore)
   
   # Run async tasks
   from .models import Task
@@ -60,9 +60,10 @@ def create_app(extra_config_settings={}):
   
   # Setup Flask-Mail
   mail.init_app(app)
-  from app.blueprints.api.general import init
-  with app.app_context():
-    init()
+  
+  # Initialize app
+  from .app_init import init
+  with app.app_context(): init()
   
   # Setup an error-logger to send emails to app.config.ADMINS
   init_email_error_handler(app)
@@ -76,7 +77,7 @@ def init_email_error_handler(app: Flask):
   # Initialize a logger to send emails on error-level messages.
   # Unhandled exceptions will now send an email message to app.config.ADMINS.
   if app.debug:
-    print('Debug mode is on. Email error handler is disabled.')
+    # print('Debug mode is on. Email error handler is disabled.')
     return # Do not send error emails while developing
   
   # Retrieve email settings from app.config

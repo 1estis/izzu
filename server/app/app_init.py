@@ -1,24 +1,22 @@
 from __future__ import annotations
-from flask import redirect, send_from_directory, url_for
 from flask_security.utils import hash_password
 
 from datetime import datetime as dt
 
 from app import user_datastore
-from . import bl
 
 from app.models.content import ContentType
 from app.models.dicts import Language
 
 
 def init():
-  if not user_datastore.find_user(email='admin@self.com'):
+  if not user_datastore.find_user(email='admin'):
     user_datastore.create_role(name="admin")
     user_datastore.create_user(
       username='admin',
-      email='admin@self.com',
+      email='admin',
       confirmed=dt.now(),
-      password=hash_password('vxtr5w7c_nxd'),
+      password=hash_password('admin'),
       roles=['admin']
     )
   if not Language.default:

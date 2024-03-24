@@ -16,8 +16,7 @@ APP_SYSTEM_ERROR_SUBJECT_LINE = APP_NAME + ' system error'
 
 COOKIE_SECURE = 'Secure'
 COOKIE_DURATION = timedelta(days=365)
-# SSLIFY = not DEBUG
-SSLIFY = True
+SSLIFY = not DEBUG
 
 # MongoDB Config
 MONGODB_DB = os.environ.get('MONGODB_DB', 'server')
@@ -55,5 +54,5 @@ if (not DEBUG) and 'DO_NOT_use_Unsecure_Secrets_in_production' in [SECRET_KEY, S
   raise Exception('You must set SECRET_KEY and SECURITY_PASSWORD_SALT in production')
 
 ADMINS = [
-    '"Estis" estis@irminta.com',
+    '"Tisseandorius" admin@irminta.com',
 ]

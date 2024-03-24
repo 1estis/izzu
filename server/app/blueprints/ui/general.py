@@ -10,4 +10,5 @@ def home():
     f'<p>ENV: {app.config["ENV"]}</p>'
     '<a href=\'{{ url_for(\'ui.security\') }}\'>Security</a>'
     '<a href=\'{{ url_for(\'ui.money\') }}\'>Money</a>'
+    '<a href=\'{{ url_for(\'ui.content\') }}\'>Content</a>'
   )

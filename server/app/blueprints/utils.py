@@ -28,8 +28,8 @@ def login_required(f):
 def fresh_login_required(f):
 
   @wraps(f)
+  @login_required
   def wrapper(*args, **kwargs):
-    if not current_user.is_authenticated: return abort(401, 'login required')
     if not current_user.fresh: return abort(401, 'fresh login required')
     return f(*args, **kwargs)
 

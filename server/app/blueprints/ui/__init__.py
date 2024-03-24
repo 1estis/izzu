@@ -45,6 +45,7 @@ bl = Blueprint(
 )
 from .security import bl
 from .general import bl
+from .content import bl
 from .money import bl
 
 bl: Blueprint = bl

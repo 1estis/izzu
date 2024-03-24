@@ -35,5 +35,5 @@ docker-compose up mongo
 Start the flask server
 
 ```bash
-flask run --host=0.0.0.0 --debugger --reload
+flask run --host=0.0.0.0 --debugger --debug --reload
 ```

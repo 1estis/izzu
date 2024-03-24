@@ -39,7 +39,7 @@ def register():
   password = request.json.get('password')
   if not (email and password):
     return abort(400, 'email or password is missing')
-  user: User | None = user_datastore.get_user(email)
+  user: User = user_datastore.find_user(email=email)
   if user: return abort(409, 'user already exists')
   
   user = user_datastore.create_user(
@@ -85,7 +85,7 @@ def login():
   password = request.json.get('password')
   if not email or not password:
     return abort(400, 'email or password is missing')
-  user: User | None = user_datastore.get_user(email)
+  user: User = user_datastore.find_user(email=email)
   if not (user and verify_password(password, user.password)):
     return abort(401, 'email or password is incorrect')
   if not login_user(user, remember=True): return abort(500, 'login failed')
@@ -95,6 +95,7 @@ def login():
 
 
 @bl.post('/logout')
+# @login_required
 def logout():
   logout_user()
   return {
@@ -122,7 +123,7 @@ def change_password():
 def send_reset_password_email():
   email: str | None = request.json.get('email')
   if not email: return abort(400, 'email is missing')
-  user: User | None = user_datastore.get_user(email)
+  user: User = user_datastore.find_user(email=email)
   if not user: return abort(404, 'user not found')
   
   ResetPassword.new(user=user, link=request.json.get('link'))

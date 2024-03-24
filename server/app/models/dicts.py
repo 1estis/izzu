@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Self
-from app import db
-from .. import DLC
+from app import db, DLC
 from .tools import Dictionary
 
 
